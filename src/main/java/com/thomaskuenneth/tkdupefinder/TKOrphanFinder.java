@@ -72,7 +72,7 @@ public class TKOrphanFinder extends AbstractDupeFinder {
                 });
             }
             System.out.println("finished");
-        } catch (Throwable thr) {
+        } catch (NoSuchAlgorithmException thr) {
             System.err.println(thr.getLocalizedMessage());
         }
     }

@@ -113,7 +113,7 @@ public class TKDupeFinderGUI extends JFrame implements ActionListener,
         panelContents = new JPanel(new BorderLayout());
         panelContents.add(panelHeader, BorderLayout.NORTH);
         modelFiles = new DefaultListModel<>();
-        listFiles = new JList<File>(modelFiles);
+        listFiles = new JList<>(modelFiles);
         listFiles.addListSelectionListener(this);
         scrollpaneFiles = new JScrollPane(listFiles);
         panelFiles = new JPanel(new BorderLayout(10, 0));
