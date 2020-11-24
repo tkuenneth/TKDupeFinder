@@ -16,6 +16,6 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "MainKt"
+        mainClass = "com.thomaskuenneth.tkdupefinder.MainKt"
     }
 }
