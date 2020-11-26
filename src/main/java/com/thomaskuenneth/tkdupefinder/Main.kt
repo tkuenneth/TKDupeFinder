@@ -1,5 +1,7 @@
 package com.thomaskuenneth.tkdupefinder
 
+import androidx.compose.desktop.AppManager
+import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.desktop.Window
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.layout.*
@@ -13,17 +15,32 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.KeyStroke
+import androidx.compose.ui.window.Menu
+import androidx.compose.ui.window.MenuBar
+import androidx.compose.ui.window.MenuItem
 
-fun main() = Window(title = "TKDupeFinder", size = IntSize(600, 400)) {
-    MaterialTheme {
-        Column() {
-            FirstRow()
-            SecondRow()
-            ThirdRow()
+fun main() {
+    androidx.compose.desktop.AppManager.setMenu(
+            MenuBar(Menu("File", MenuItem(
+                    name = "Exit",
+                    onClick = { AppManager.exit() },
+                    shortcut = KeyStroke(Key.X)
+            )))
+    )
+    Window(title = "TKDupeFinder",
+            size = IntSize(600, 400)) {
+        DesktopMaterialTheme {
+            Column() {
+                FirstRow()
+                SecondRow()
+                ThirdRow()
+            }
         }
     }
 }
