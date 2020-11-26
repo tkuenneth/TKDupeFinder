@@ -1,4 +1,5 @@
 import org.jetbrains.compose.compose
+import org.jetbrains.compose.desktop.application.dsl.*
 
 plugins {
     kotlin("jvm") version "1.4.0"
@@ -17,5 +18,13 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.thomaskuenneth.tkdupefinder.MainKt"
+        nativeDistributions {
+            targetFormats(TargetFormat.Dmg)
+            packageName = "TKDupeFinder"
+            version = "0.1-SNAPSHOT"
+            description = "Find duplicate files"
+            copyright = "© 2020 Thomas Kuenneth. All rights reserved."
+            vendor = "Thomas Kuenneth"
+        }
     }
 }
