@@ -1,13 +1,13 @@
 package com.thomaskuenneth.tkdupefinder
 
 import androidx.compose.desktop.AppManager
+import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.desktop.Window
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
@@ -24,24 +24,50 @@ import androidx.compose.ui.window.KeyStroke
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
+import java.awt.datatransfer.DataFlavor
+import java.awt.dnd.DnDConstants
+import java.awt.dnd.DropTarget
+import java.awt.dnd.DropTargetDropEvent
+import java.io.File
+import javax.swing.SwingUtilities.invokeLater
+
 
 fun main() {
-    androidx.compose.desktop.AppManager.setMenu(
+    AppManager.setMenu(
             MenuBar(Menu("File", MenuItem(
                     name = "Exit",
                     onClick = { AppManager.exit() },
                     shortcut = KeyStroke(Key.X)
             )))
     )
-    Window(title = "TKDupeFinder",
-            size = IntSize(600, 400)) {
-        DesktopMaterialTheme {
-            Column() {
-                FirstRow()
-                SecondRow()
-                ThirdRow()
+    invokeLater {
+        AppWindow(title = "TKDupeFinder",
+                size = IntSize(600, 400)).show {
+            DesktopMaterialTheme {
+                Column() {
+                    FirstRow()
+                    SecondRow()
+                    ThirdRow()
+                }
             }
         }
+        val target = object : DropTarget() {
+            @Synchronized
+            override fun drop(evt: DropTargetDropEvent) {
+                try {
+                    evt.acceptDrop(DnDConstants.ACTION_REFERENCE)
+                    val droppedFiles = evt
+                            .transferable.getTransferData(
+                                    DataFlavor.javaFileListFlavor) as List<*>
+                    for (file in droppedFiles) {
+                        println((file as File).absolutePath)
+                    }
+                } catch (ex: Exception) {
+                    ex.printStackTrace()
+                }
+            }
+        }
+        AppManager.windows.first().window.contentPane.dropTarget = target
     }
 }
 
