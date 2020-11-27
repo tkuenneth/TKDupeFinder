@@ -93,6 +93,7 @@ fun FirstRow() {
         Button(
                 onClick = {},
                 modifier = Modifier.alignByBaseline(),
+                enabled = File(name.value.text).isDirectory
         ) {
             Text("Find")
         }
