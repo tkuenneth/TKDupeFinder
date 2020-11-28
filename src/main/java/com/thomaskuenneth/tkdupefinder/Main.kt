@@ -26,6 +26,8 @@ import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import javax.swing.SwingUtilities.invokeLater
 
+private val df = TKDupeFinder()
+
 fun main() {
     invokeLater {
         AppWindow(title = "TKDupeFinder",
@@ -37,12 +39,14 @@ fun main() {
 
 @Composable
 fun TKDupeFinderContent() {
-    val name = remember { mutableStateOf(TextFieldValue("")) }
+    val name = remember { mutableStateOf(TextFieldValue("/Users/thomas/Downloads")) }
+    val currentPos = remember { mutableStateOf(0) }
+    val checksums = remember { mutableStateOf<List<String>>(emptyList()) }
     DesktopMaterialTheme {
         Column() {
-            FirstRow(name)
-            SecondRow()
-            ThirdRow()
+            FirstRow(name, currentPos, checksums)
+            SecondRow(currentPos, checksums.value.size)
+            ThirdRow(currentPos.value, checksums.value)
         }
     }
     val target = object : DropTarget() {
@@ -65,7 +69,9 @@ fun TKDupeFinderContent() {
 }
 
 @Composable
-fun FirstRow(name: MutableState<TextFieldValue>) {
+fun FirstRow(name: MutableState<TextFieldValue>,
+             currentPos: MutableState<Int>,
+             checksums: MutableState<List<String>>) {
     Row(
             modifier = Modifier.fillMaxWidth()
                     .padding(8.dp),
@@ -83,7 +89,13 @@ fun FirstRow(name: MutableState<TextFieldValue>) {
         )
         MySpacer()
         Button(
-                onClick = {},
+                onClick = {
+                    df.clear()
+                    df.scanDir(name.value.text, true)
+                    df.removeSingles()
+                    currentPos.value = 0
+                    checksums.value = df.checksums.toList()
+                },
                 modifier = Modifier.alignByBaseline(),
                 enabled = File(name.value.text).isDirectory
         ) {
@@ -93,21 +105,30 @@ fun FirstRow(name: MutableState<TextFieldValue>) {
 }
 
 @Composable
-fun SecondRow() {
+fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int) {
+    val current = currentPos.value
     Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
                     .padding(8.dp),
     ) {
-        Button(onClick = {}) {
+        Button(onClick = {
+            currentPos.value -= 1
+        },
+                enabled = current > 0) {
             Text("\u140A")
         }
         MySpacer()
-        Button(onClick = {}) {
+        Button(onClick = {
+            currentPos.value += 1
+        },
+                enabled = (current + 1) < checksumsSize) {
             Text("\u1405")
         }
         MySpacer()
-        Text(text = "1 of 42")
+        Text(text = if (checksumsSize > 0) {
+            "${currentPos.value + 1} of $checksumsSize"
+        } else "No duplicates found")
     }
 }
 
@@ -117,14 +138,15 @@ fun MySpacer() {
 }
 
 @Composable
-fun ThirdRow() {
+fun ThirdRow(currentPos: Int, checksums: List<String>) {
     val scrollState = rememberScrollState()
     ScrollableColumn(
             scrollState = scrollState,
             modifier = Modifier.fillMaxSize().padding(8.dp),
     ) {
-        Text("1")
-        Text("2")
-        Text("3")
+        if (checksums.isNotEmpty())
+            df.getFiles(checksums[currentPos]).forEach {
+                Text(it.absolutePath)
+            }
     }
 }
