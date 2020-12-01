@@ -12,6 +12,7 @@ import androidx.compose.material.ListItem
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,11 +43,12 @@ fun TKDupeFinderContent() {
     val name = remember { mutableStateOf(TextFieldValue("/Users/thomas/Downloads")) }
     val currentPos = remember { mutableStateOf(0) }
     val checksums = remember { mutableStateOf<List<String>>(emptyList()) }
+    val selected = remember { mutableStateMapOf<Int, Boolean>() }
     DesktopMaterialTheme {
         Column() {
             FirstRow(name, currentPos, checksums)
-            SecondRow(currentPos, checksums.value.size)
-            ThirdRow(currentPos.value, checksums.value)
+            SecondRow(currentPos, checksums.value.size, selected)
+            ThirdRow(currentPos.value, checksums.value, selected)
         }
     }
     val target = object : DropTarget() {
@@ -105,8 +107,10 @@ fun FirstRow(name: MutableState<TextFieldValue>,
 }
 
 @Composable
-fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int) {
+fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
+              selected: SnapshotStateMap<Int, Boolean>) {
     val current = currentPos.value
+    selected.clear()
     Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -138,10 +142,9 @@ fun MySpacer() {
 }
 
 @Composable
-fun ThirdRow(currentPos: Int, checksums: List<String>) {
+fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMap<Int, Boolean>) {
     val items = if (checksums.isNotEmpty())
         df.getFiles(checksums[currentPos]) else emptyList()
-    val selected = remember { mutableStateMapOf<Int, Boolean>() }
     LazyColumnForIndexed(items,
             modifier = Modifier.fillMaxSize().padding(8.dp),
             itemContent = { index, item ->
