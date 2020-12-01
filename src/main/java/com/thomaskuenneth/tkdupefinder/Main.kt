@@ -3,18 +3,18 @@ package com.thomaskuenneth.tkdupefinder
 import androidx.compose.desktop.AppManager
 import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
-import androidx.compose.foundation.ScrollableColumn
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumnForIndexed
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.Button
+import androidx.compose.material.ListItem
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
@@ -139,14 +139,20 @@ fun MySpacer() {
 
 @Composable
 fun ThirdRow(currentPos: Int, checksums: List<String>) {
-    val scrollState = rememberScrollState()
-    ScrollableColumn(
-            scrollState = scrollState,
+    val items = if (checksums.isNotEmpty())
+        df.getFiles(checksums[currentPos]) else emptyList()
+    val selected = remember { mutableStateMapOf<Int, Boolean>() }
+    LazyColumnForIndexed(items,
             modifier = Modifier.fillMaxSize().padding(8.dp),
-    ) {
-        if (checksums.isNotEmpty())
-            df.getFiles(checksums[currentPos]).forEach {
-                Text(it.absolutePath)
-            }
-    }
+            itemContent = { index, item ->
+                val current = selected[index] ?: false
+                ListItem(secondaryText = { Text(item.parent) },
+                        modifier = Modifier.toggleable(onValueChange = {
+                            selected[index] = !current
+                        },
+                                value = current)
+                                .background(if (current)
+                                    Color.LightGray else Color.Transparent),
+                        text = { Text(item.name) })
+            })
 }
