@@ -2,8 +2,8 @@ import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.*
 
 plugins {
-    kotlin("jvm") version "1.4.0"
-    id("org.jetbrains.compose") version "0.1.0-m1-build62"
+    kotlin("jvm") version "1.4.20"
+    id("org.jetbrains.compose") version "0.3.0-build133"
 }
 
 repositories {

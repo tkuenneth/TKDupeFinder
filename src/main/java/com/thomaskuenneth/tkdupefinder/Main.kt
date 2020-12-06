@@ -7,35 +7,55 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumnForIndexed
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.Button
-import androidx.compose.material.ListItem
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.KeyStroke
+import androidx.compose.ui.window.Menu
+import androidx.compose.ui.window.MenuBar
+import androidx.compose.ui.window.MenuItem
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import javax.swing.SwingUtilities.invokeLater
+import kotlin.concurrent.thread
 
 private val df = TKDupeFinder()
+private var isInDarkMode = true
 
 fun main() {
     invokeLater {
+        updateMenuBar()
         AppWindow(title = "TKDupeFinder",
                 size = IntSize(600, 400)).show {
             TKDupeFinderContent()
         }
     }
+}
+
+fun updateMenuBar() {
+//    thread {
+        AppManager.setMenu(
+                MenuBar(Menu("Appearance", MenuItem(
+                        name = if (isInDarkMode) "Light Mode" else "Dark Mode",
+                        onClick = {
+                            isInDarkMode = !isInDarkMode
+                            updateMenuBar()
+                        },
+                        shortcut = KeyStroke(Key.L)
+                )))
+        )
+//    }
 }
 
 @Composable
@@ -44,7 +64,14 @@ fun TKDupeFinderContent() {
     val currentPos = remember { mutableStateOf(0) }
     val checksums = remember { mutableStateOf<List<String>>(emptyList()) }
     val selected = remember { mutableStateMapOf<Int, Boolean>() }
-    DesktopMaterialTheme {
+    var isInDarkMode by remember { mutableStateOf(true /* isSystemInDarkTheme() */) }
+    val colors = if (isInDarkMode) {
+        darkColors()
+    } else {
+        lightColors()
+    }
+
+    DesktopMaterialTheme(colors = colors) {
         Column() {
             FirstRow(name, currentPos, checksums)
             SecondRow(currentPos, checksums.value.size, selected)
