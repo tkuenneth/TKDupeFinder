@@ -28,14 +28,29 @@ import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import javax.swing.SwingUtilities.invokeLater
-import kotlin.concurrent.thread
+import kotlin.properties.Delegates.observable
 
 private val df = TKDupeFinder()
-private var isInDarkMode = true
 
+// toggle in menubar
+private var isInDarkMode: Boolean by observable(true /* isSystemInDarkTheme() */) { _, oldValue, newValue ->
+    onIsInDarkModeChanged?.let { it(oldValue, newValue) }
+}
+private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
+
+@ExperimentalComposeApi
 fun main() {
     invokeLater {
-        updateMenuBar()
+        AppManager.setMenu(
+                // currently the menu item name is not updated upon changes
+                MenuBar(Menu("Appearance", MenuItem(
+                        name = if (isInDarkMode) "Light Mode" else "Dark Mode",
+                        onClick = {
+                            isInDarkMode = !isInDarkMode
+                        },
+                        shortcut = KeyStroke(Key.L)
+                )))
+        )
         AppWindow(title = "TKDupeFinder",
                 size = IntSize(600, 400)).show {
             TKDupeFinderContent()
@@ -43,34 +58,22 @@ fun main() {
     }
 }
 
-fun updateMenuBar() {
-//    thread {
-        AppManager.setMenu(
-                MenuBar(Menu("Appearance", MenuItem(
-                        name = if (isInDarkMode) "Light Mode" else "Dark Mode",
-                        onClick = {
-                            isInDarkMode = !isInDarkMode
-                            updateMenuBar()
-                        },
-                        shortcut = KeyStroke(Key.L)
-                )))
-        )
-//    }
+private fun colors(): Colors = if (isInDarkMode) {
+    darkColors()
+} else {
+    lightColors()
 }
 
 @Composable
 fun TKDupeFinderContent() {
-    val name = remember { mutableStateOf(TextFieldValue("/Users/thomas/Downloads")) }
+    var colors by remember { mutableStateOf(colors()) }
+    onIsInDarkModeChanged = { _, _ ->
+        colors = colors()
+    }
+    val name = remember { mutableStateOf(TextFieldValue(System.getProperty("user.home"))) }
     val currentPos = remember { mutableStateOf(0) }
     val checksums = remember { mutableStateOf<List<String>>(emptyList()) }
     val selected = remember { mutableStateMapOf<Int, Boolean>() }
-    var isInDarkMode by remember { mutableStateOf(true /* isSystemInDarkTheme() */) }
-    val colors = if (isInDarkMode) {
-        darkColors()
-    } else {
-        lightColors()
-    }
-
     DesktopMaterialTheme(colors = colors) {
         Column() {
             FirstRow(name, currentPos, checksums)
