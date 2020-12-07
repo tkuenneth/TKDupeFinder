@@ -32,8 +32,7 @@ import kotlin.properties.Delegates.observable
 
 private val df = TKDupeFinder()
 
-// toggle in menubar
-private var isInDarkMode: Boolean by observable(true /* isSystemInDarkTheme() */) { _, oldValue, newValue ->
+private var isInDarkMode: Boolean by observable(false) { _, oldValue, newValue ->
     onIsInDarkModeChanged?.let { it(oldValue, newValue) }
 }
 private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
@@ -41,21 +40,33 @@ private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 @ExperimentalComposeApi
 fun main() {
     invokeLater {
-        AppManager.setMenu(
-                // currently the menu item name is not updated upon changes
-                MenuBar(Menu("Appearance", MenuItem(
-                        name = if (isInDarkMode) "Light Mode" else "Dark Mode",
-                        onClick = {
-                            isInDarkMode = !isInDarkMode
-                        },
-                        shortcut = KeyStroke(Key.L)
-                )))
-        )
+        configureMenuBar()
         AppWindow(title = "TKDupeFinder",
                 size = IntSize(600, 400)).show {
             TKDupeFinderContent()
         }
     }
+}
+
+private fun configureMenuBar() {
+    val menuBar = MenuBar()
+    if (!System.getProperty("os.name", "").contains("mac os x", true)) {
+        menuBar.add(Menu("File", MenuItem(
+                name = "Quit",
+                onClick = {
+                    AppManager.exit()
+                },
+                shortcut = KeyStroke(Key.X)
+        )))
+    }
+    menuBar.add(Menu("Appearance", MenuItem(
+            name = "Toggle Colors",
+            onClick = {
+                isInDarkMode = !isInDarkMode
+            },
+            shortcut = KeyStroke(Key.T)
+    )))
+    AppManager.setMenu(menuBar)
 }
 
 private fun colors(): Colors = if (isInDarkMode) {
