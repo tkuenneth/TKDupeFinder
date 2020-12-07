@@ -139,7 +139,7 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                     currentPos.value = 0
                     checksums.value = df.checksums.toList()
                 },
-                modifier = Modifier.alignByBaseline(),
+                modifier = Modifier.alignByBaseline().width(100.dp),
                 enabled = File(name.value.text).isDirectory
         ) {
             Text("Find")
@@ -186,17 +186,38 @@ fun MySpacer() {
 fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMap<Int, Boolean>) {
     val items = if (checksums.isNotEmpty())
         df.getFiles(checksums[currentPos]) else emptyList()
-    LazyColumnForIndexed(items,
-            modifier = Modifier.fillMaxSize().padding(8.dp),
-            itemContent = { index, item ->
-                val current = selected[index] ?: false
-                ListItem(secondaryText = { Text(item.parent) },
-                        modifier = Modifier.toggleable(onValueChange = {
-                            selected[index] = !current
-                        },
-                                value = current)
-                                .background(if (current)
-                                    Color.LightGray else Color.Transparent),
-                        text = { Text(item.name) })
-            })
+    val numSelected = selected.entries.count { element ->
+        element.value
+    }
+    Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        LazyColumnForIndexed(items,
+                modifier = Modifier.weight(1.0f),
+                itemContent = { index, item ->
+                    val current = selected[index] ?: false
+                    ListItem(secondaryText = { Text(item.parent) },
+                            modifier = Modifier.toggleable(onValueChange = {
+                                selected[index] = !current
+                            },
+                                    value = current)
+                                    .background(if (current)
+                                        Color.LightGray else Color.Transparent),
+                            text = { Text(item.name) })
+                })
+        MySpacer()
+        Column() {
+            Button(onClick = {
+            },
+                    modifier = Modifier.width(100.dp),
+                    enabled = numSelected > 0) {
+                Text("Show")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick = {
+            },
+                    modifier = Modifier.width(100.dp),
+                    enabled = numSelected > 0) {
+                Text("Delete")
+            }
+        }
+    }
 }
