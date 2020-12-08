@@ -87,7 +87,7 @@ fun TKDupeFinderContent() {
     val selected = remember { mutableStateMapOf<Int, Boolean>() }
     DesktopMaterialTheme(colors = colors) {
         Column() {
-            FirstRow(name, currentPos, checksums)
+            FirstRow(name, currentPos, checksums, selected)
             SecondRow(currentPos, checksums.value.size, selected)
             ThirdRow(currentPos.value, checksums.value, selected)
         }
@@ -114,7 +114,8 @@ fun TKDupeFinderContent() {
 @Composable
 fun FirstRow(name: MutableState<TextFieldValue>,
              currentPos: MutableState<Int>,
-             checksums: MutableState<List<String>>) {
+             checksums: MutableState<List<String>>,
+             selected: SnapshotStateMap<Int, Boolean>) {
     Row(
             modifier = Modifier.fillMaxWidth()
                     .padding(8.dp),
@@ -133,6 +134,8 @@ fun FirstRow(name: MutableState<TextFieldValue>,
         MySpacer()
         Button(
                 onClick = {
+                    selected.clear()
+                    checksums.value = emptyList()
                     df.clear()
                     df.scanDir(name.value.text, true)
                     df.removeSingles()
@@ -151,13 +154,13 @@ fun FirstRow(name: MutableState<TextFieldValue>,
 fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
               selected: SnapshotStateMap<Int, Boolean>) {
     val current = currentPos.value
-    selected.clear()
     Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
                     .padding(8.dp),
     ) {
         Button(onClick = {
+            selected.clear()
             currentPos.value -= 1
         },
                 enabled = current > 0) {
@@ -165,6 +168,7 @@ fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
         }
         MySpacer()
         Button(onClick = {
+            selected.clear()
             currentPos.value += 1
         },
                 enabled = (current + 1) < checksumsSize) {
@@ -187,6 +191,9 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     val items = if (checksums.isNotEmpty())
         df.getFiles(checksums[currentPos]) else emptyList()
     val numSelected = selected.entries.count { element ->
+        element.value
+    }
+    val selectedItems = selected.entries.filter { element ->
         element.value
     }
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
