@@ -33,6 +33,9 @@ import java.io.File
 import javax.swing.SwingUtilities.invokeLater
 import kotlin.properties.Delegates.observable
 
+// TODO: Set app icon
+// TODO: switch to thread because of
+
 private val df = TKDupeFinder()
 
 private var isInDarkMode: Boolean by observable(false) { _, oldValue, newValue ->
@@ -147,18 +150,13 @@ fun FirstRow(name: MutableState<TextFieldValue>,
         MySpacer()
         Button(
                 onClick = {
-                    // TODO: scanning
-                    scanning.value = true
-                    selected.clear()
-                    checksums.value = emptyList()
-                    GlobalScope.launch(Dispatchers.IO) {
-                        df.clear()
-                        df.scanDir(name.value.text, true)
-                        df.removeSingles()
-                        launch(Dispatchers.Main) {
-                            currentPos.value = 0
-                            checksums.value = df.checksums.toList()
-                        }
+                    if (scanning.value) {
+                        stopScan(currentPos, checksums, scanning)
+                    } else {
+                        scanning.value = true
+                        selected.clear()
+                        checksums.value = emptyList()
+                        startScan(name.value.text, currentPos, checksums, scanning)
                     }
                 },
                 modifier = Modifier.alignByBaseline().width(100.dp),
@@ -246,4 +244,25 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
             }
         }
     }
+}
+
+private fun startScan(baseDir: String, currentPos: MutableState<Int>,
+                      checksums: MutableState<List<String>>,
+                      scanning: MutableState<Boolean>) {
+    GlobalScope.launch(Dispatchers.IO) {
+        df.clear()
+        df.scanDir(baseDir, true)
+        df.removeSingles()
+        launch(Dispatchers.Main) {
+            stopScan(currentPos, checksums, scanning)
+        }
+    }
+}
+
+private fun stopScan(currentPos: MutableState<Int>,
+                     checksums: MutableState<List<String>>,
+                     scanning: MutableState<Boolean>) {
+    currentPos.value = 0
+    checksums.value = df.checksums.toList()
+    scanning.value = false
 }
