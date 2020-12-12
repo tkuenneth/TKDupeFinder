@@ -1,4 +1,5 @@
 **/.DS_Store
+**/Browse.plb
 
 build/
 .gradle/
