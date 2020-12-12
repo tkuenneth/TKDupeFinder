@@ -22,7 +22,9 @@ import androidx.compose.ui.window.KeyStroke
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -86,11 +88,19 @@ fun TKDupeFinderContent() {
     val currentPos = remember { mutableStateOf(0) }
     val checksums = remember { mutableStateOf<List<String>>(emptyList()) }
     val selected = remember { mutableStateMapOf<Int, Boolean>() }
+    val scanning = remember { mutableStateOf(false) }
     DesktopMaterialTheme(colors = colors) {
         Column() {
-            FirstRow(name, currentPos, checksums, selected)
-            SecondRow(currentPos, checksums.value.size, selected)
-            ThirdRow(currentPos.value, checksums.value, selected)
+            FirstRow(name, currentPos, checksums, selected, scanning)
+            if (scanning.value) {
+                Box(modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                SecondRow(currentPos, checksums.value.size, selected)
+                ThirdRow(currentPos.value, checksums.value, selected)
+            }
         }
     }
     val target = object : DropTarget() {
@@ -116,13 +126,15 @@ fun TKDupeFinderContent() {
 fun FirstRow(name: MutableState<TextFieldValue>,
              currentPos: MutableState<Int>,
              checksums: MutableState<List<String>>,
-             selected: SnapshotStateMap<Int, Boolean>) {
+             selected: SnapshotStateMap<Int, Boolean>,
+             scanning: MutableState<Boolean>) {
     Row(
             modifier = Modifier.fillMaxWidth()
-                    .padding(8.dp),
+                    .padding(8.dp)
     ) {
         TextField(
                 value = name.value,
+                singleLine = true,
                 placeholder = {
                     Text("Base directory")
                 },
@@ -135,6 +147,8 @@ fun FirstRow(name: MutableState<TextFieldValue>,
         MySpacer()
         Button(
                 onClick = {
+                    // TODO: scanning
+                    scanning.value = true
                     selected.clear()
                     checksums.value = emptyList()
                     GlobalScope.launch(Dispatchers.IO) {
@@ -148,9 +162,9 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                     }
                 },
                 modifier = Modifier.alignByBaseline().width(100.dp),
-                enabled = File(name.value.text).isDirectory
+                enabled = scanning.value || File(name.value.text).isDirectory
         ) {
-            Text("Find")
+            Text(if (scanning.value) "Cancel" else "Find")
         }
     }
 }
