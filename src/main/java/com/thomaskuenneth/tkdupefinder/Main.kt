@@ -22,6 +22,7 @@ import androidx.compose.ui.window.KeyStroke
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
+import kotlinx.coroutines.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -136,11 +137,15 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                 onClick = {
                     selected.clear()
                     checksums.value = emptyList()
-                    df.clear()
-                    df.scanDir(name.value.text, true)
-                    df.removeSingles()
-                    currentPos.value = 0
-                    checksums.value = df.checksums.toList()
+                    GlobalScope.launch(Dispatchers.IO) {
+                        df.clear()
+                        df.scanDir(name.value.text, true)
+                        df.removeSingles()
+                        launch(Dispatchers.Main) {
+                            currentPos.value = 0
+                            checksums.value = df.checksums.toList()
+                        }
+                    }
                 },
                 modifier = Modifier.alignByBaseline().width(100.dp),
                 enabled = File(name.value.text).isDirectory
