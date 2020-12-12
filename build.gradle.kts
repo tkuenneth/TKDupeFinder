@@ -25,6 +25,9 @@ compose.desktop {
             description = "Find duplicate files"
             copyright = "© 2020 Thomas Kuenneth. All rights reserved."
             vendor = "Thomas Kuenneth"
+            macOS {
+                iconFile.set(project.file("app_icon.icns"))
+            }
         }
     }
 }
