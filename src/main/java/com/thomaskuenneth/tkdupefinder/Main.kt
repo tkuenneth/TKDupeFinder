@@ -1,3 +1,18 @@
+/*
+ * Copyright 2011 - 2020 Thomas Kuenneth
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 3
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package com.thomaskuenneth.tkdupefinder
 
 import androidx.compose.desktop.AppManager
@@ -23,6 +38,7 @@ import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
 import java.awt.Desktop
+import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -31,8 +47,6 @@ import java.io.File
 import javax.swing.SwingUtilities.invokeLater
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
-
-// TODO: Set app icon
 
 private val df = TKDupeFinder()
 
@@ -120,7 +134,9 @@ fun TKDupeFinderContent() {
             }
         }
     }
-    AppManager.windows.first().window.contentPane.dropTarget = target
+    val window = AppManager.windows.first().window
+    window.contentPane.dropTarget = target
+    window.iconImage = Toolkit.getDefaultToolkit().getImage("app_icon.png")
 }
 
 @Composable
