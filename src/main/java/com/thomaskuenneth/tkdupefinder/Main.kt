@@ -22,15 +22,13 @@ import androidx.compose.ui.window.KeyStroke
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.io.File
 import javax.swing.SwingUtilities.invokeLater
+import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
 // TODO: Set app icon
@@ -246,10 +244,11 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     }
 }
 
+private var worker: Thread? = null
 private fun startScan(baseDir: String, currentPos: MutableState<Int>,
                       checksums: MutableState<List<String>>,
                       scanning: MutableState<Boolean>) {
-    GlobalScope.launch(Dispatchers.IO) {
+    worker = thread {
         df.clear()
         df.scanDir(baseDir, true)
         df.removeSingles()
@@ -260,6 +259,9 @@ private fun startScan(baseDir: String, currentPos: MutableState<Int>,
 private fun stopScan(currentPos: MutableState<Int>,
                      checksums: MutableState<List<String>>,
                      scanning: MutableState<Boolean>) {
+    if (worker?.isAlive == true) {
+        worker?.stop()
+    }
     currentPos.value = 0
     checksums.value = df.checksums.toList()
     scanning.value = false
