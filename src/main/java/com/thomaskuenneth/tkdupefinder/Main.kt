@@ -253,9 +253,7 @@ private fun startScan(baseDir: String, currentPos: MutableState<Int>,
         df.clear()
         df.scanDir(baseDir, true)
         df.removeSingles()
-        launch(Dispatchers.Main) {
-            stopScan(currentPos, checksums, scanning)
-        }
+        stopScan(currentPos, checksums, scanning)
     }
 }
 
