@@ -22,6 +22,7 @@ import androidx.compose.ui.window.KeyStroke
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
+import java.awt.Desktop
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
@@ -32,7 +33,6 @@ import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
 // TODO: Set app icon
-// TODO: switch to thread because of
 
 private val df = TKDupeFinder()
 
@@ -205,12 +205,11 @@ fun MySpacer() {
 fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMap<Int, Boolean>) {
     val items = if (checksums.isNotEmpty())
         df.getFiles(checksums[currentPos]) else emptyList()
-    val numSelected = selected.entries.count { element ->
-        element.value
+    val selectedFiles = mutableListOf<File>()
+    selected.entries.forEachIndexed { index, entry ->
+        if (entry.value) selectedFiles.add(items[index])
     }
-    val selectedItems = selected.entries.filter { element ->
-        element.value
-    }
+    val numSelected = selectedFiles.size
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         LazyColumnForIndexed(items,
                 modifier = Modifier.weight(1.0f),
@@ -228,6 +227,9 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
         MySpacer()
         Column() {
             Button(onClick = {
+                selectedFiles.forEach {
+                    Desktop.getDesktop().open(it)
+                }
             },
                     modifier = Modifier.width(100.dp),
                     enabled = numSelected > 0) {
@@ -235,9 +237,13 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
+                selectedFiles.forEach {
+                    df.deleteFile(checksums[currentPos], it)
+                }
+                selected.clear()
             },
                     modifier = Modifier.width(100.dp),
-                    enabled = numSelected > 0) {
+                    enabled = numSelected > 0 && numSelected < items.size) {
                 Text("Delete")
             }
         }
@@ -252,7 +258,9 @@ private fun startScan(baseDir: String, currentPos: MutableState<Int>,
         df.clear()
         df.scanDir(baseDir, true)
         df.removeSingles()
-        stopScan(currentPos, checksums, scanning)
+        invokeLater {
+            stopScan(currentPos, checksums, scanning)
+        }
     }
 }
 
