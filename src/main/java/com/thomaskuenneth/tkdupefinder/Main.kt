@@ -18,6 +18,7 @@ package com.thomaskuenneth.tkdupefinder
 import androidx.compose.desktop.AppManager
 import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
+import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumnForIndexed
@@ -226,6 +227,7 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
         if (entry.value) selectedFiles.add(items[index])
     }
     val numSelected = selectedFiles.size
+    var isConfirmDialogVisible by remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         LazyColumnForIndexed(items,
                 modifier = Modifier.weight(1.0f),
@@ -253,14 +255,39 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
-                selectedFiles.forEach {
-                    df.deleteFile(checksums[currentPos], it)
-                }
-                selected.clear()
+                isConfirmDialogVisible = true
             },
                     modifier = Modifier.width(100.dp),
                     enabled = numSelected > 0 && numSelected < items.size) {
                 Text("Delete")
+            }
+            if (isConfirmDialogVisible) {
+                AlertDialog(onDismissRequest = {
+                    isConfirmDialogVisible = false
+                },
+                        title = {
+                            Text("Confirm deletion of...")
+                        },
+                        text = {
+                            ScrollableColumn {
+                                val sb = StringBuilder()
+                                selectedFiles.forEach {
+                                    sb.append(checksums[currentPos], it.name).appendLine()
+                                }
+                                Text(sb.toString())
+                            }
+                        },
+                        confirmButton = {
+                            Button(onClick = {
+                                isConfirmDialogVisible = false
+                                selectedFiles.forEach {
+                                    df.deleteFile(checksums[currentPos], it)
+                                }
+                                selected.clear()
+                            }) {
+                                Text("Delete")
+                            }
+                        })
             }
         }
     }
