@@ -23,6 +23,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumnForIndexed
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.layout.LastBaseline
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -146,6 +148,19 @@ fun FirstRow(name: MutableState<TextFieldValue>,
              checksums: MutableState<List<String>>,
              selected: SnapshotStateMap<Int, Boolean>,
              scanning: MutableState<Boolean>) {
+    val enabled = scanning.value || File(name.value.text).isDirectory
+    val function = {
+        if (enabled) {
+            if (scanning.value) {
+                stopScan(currentPos, checksums, scanning)
+            } else {
+                scanning.value = true
+                selected.clear()
+                checksums.value = emptyList()
+                startScan(name.value.text, currentPos, checksums, scanning)
+            }
+        }
+    }
     Row(
             modifier = Modifier.fillMaxWidth()
                     .padding(8.dp)
@@ -153,6 +168,10 @@ fun FirstRow(name: MutableState<TextFieldValue>,
         TextField(
                 value = name.value,
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Search),
+                onImeActionPerformed = { _, _ ->
+                    function()
+                },
                 placeholder = {
                     Text("Base directory")
                 },
@@ -164,18 +183,9 @@ fun FirstRow(name: MutableState<TextFieldValue>,
         )
         MySpacer()
         Button(
-                onClick = {
-                    if (scanning.value) {
-                        stopScan(currentPos, checksums, scanning)
-                    } else {
-                        scanning.value = true
-                        selected.clear()
-                        checksums.value = emptyList()
-                        startScan(name.value.text, currentPos, checksums, scanning)
-                    }
-                },
+                onClick = function,
                 modifier = Modifier.alignByBaseline().width(100.dp),
-                enabled = scanning.value || File(name.value.text).isDirectory
+                enabled = enabled
         ) {
             Text(if (scanning.value) "Cancel" else "Find")
         }
