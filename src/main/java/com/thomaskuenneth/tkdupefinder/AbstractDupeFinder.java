@@ -29,7 +29,7 @@ import com.thomaskuenneth.TKJMD5;
  * An abstract base class, used to find duplicate and orphans files
  *
  * @author Thomas Kuenneth
- * @version 0.01a, 2019/02/17
+ * @version 0.02, 2020/12/19
  */
 public abstract class AbstractDupeFinder {
 
@@ -50,7 +50,7 @@ public abstract class AbstractDupeFinder {
      *
      * @param basedir base directory
      * @param recursive scan subdirectories
-     * @see scanFile
+     * @see #scanFile(File)
      */
     void scanDir(String basedir, boolean recursive) {
         scanDir(new File(basedir), recursive);
@@ -62,7 +62,7 @@ public abstract class AbstractDupeFinder {
      *
      * @param basedir base directory
      * @param recursive scan subdirectories
-     * @see scanFile
+     * @see #scanFile(File)
      */
     public void scanDir(File basedir, boolean recursive) {
         File[] files = basedir.listFiles();
@@ -83,6 +83,10 @@ public abstract class AbstractDupeFinder {
      * @param file the file
      */
     void scanFile(File file) {
+        if (file.length() == 0) {
+            System.err.println(String.format("%s is 0 bytes", file.getAbsolutePath()));
+            return;
+        }
         byte[] digest = md.getChecksum(file);
         if (digest != null) {
             String key = TKJMD5.toString(digest);
