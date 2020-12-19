@@ -43,3 +43,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./build/compose/binaries/main/dmg/  
           asset_name: TKDupeFinder-0.1-SNAPSHOT.dmg
+          asset_content_type: application/dmg 
