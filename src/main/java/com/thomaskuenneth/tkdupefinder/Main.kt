@@ -217,9 +217,13 @@ fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
             Text("\u1405")
         }
         MySpacer()
-        Text(text = if (checksumsSize > 0) {
+        var msg = if (checksumsSize > 0) {
             "${currentPos.value + 1} of $checksumsSize"
-        } else "No duplicates found")
+        } else "No duplicates found"
+        if (scanInProgress) {
+            msg = "$msg (cancelled)"
+        }
+        Text(text = msg)
     }
 }
 
@@ -304,13 +308,16 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
 }
 
 private var worker: Thread? = null
+private var scanInProgress = false
 private fun startScan(baseDir: String, currentPos: MutableState<Int>,
                       checksums: MutableState<List<String>>,
                       scanning: MutableState<Boolean>) {
     worker = thread {
         df.clear()
+        scanInProgress = true
         df.scanDir(baseDir, true)
         df.removeSingles()
+        scanInProgress = false
         invokeLater {
             stopScan(currentPos, checksums, scanning)
         }
