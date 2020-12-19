@@ -23,3 +23,7 @@ jobs:
         run: chmod +x gradlew
       - name: Create macOS Distribution
         run: ./gradlew packageDmg
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Package
+          path: build/compose/binaries/main/msi
