@@ -34,9 +34,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.KeyStroke
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
@@ -46,7 +44,10 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
 import java.io.File
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities.invokeLater
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
@@ -62,8 +63,9 @@ private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 fun main() {
     invokeLater {
         configureMenuBar()
-        AppWindow(title = "TKDupeFinder",
-                size = IntSize(600, 400)).show {
+        AppWindow(
+                title = "TKDupeFinder",
+        ).show {
             TKDupeFinderContent()
         }
     }
@@ -77,7 +79,8 @@ private fun configureMenuBar() {
                 onClick = {
                     AppManager.exit()
                 },
-                shortcut = KeyStroke(Key.X)
+                shortcut = KeyStroke.getKeyStroke(
+                        KeyEvent.VK_F4, ActionEvent.ALT_MASK)
         )))
     }
     menuBar.add(Menu("Appearance", MenuItem(
@@ -85,7 +88,8 @@ private fun configureMenuBar() {
             onClick = {
                 isInDarkMode = !isInDarkMode
             },
-            shortcut = KeyStroke(Key.T)
+            shortcut = KeyStroke.getKeyStroke(
+                    KeyEvent.VK_T, ActionEvent.CTRL_MASK)
     )))
     AppManager.setMenu(menuBar)
 }
