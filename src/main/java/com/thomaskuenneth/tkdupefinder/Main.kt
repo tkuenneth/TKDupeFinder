@@ -30,7 +30,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
@@ -38,6 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
+import com.thomaskuenneth.WindowsRegistry
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.awt.Desktop
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
@@ -61,6 +65,17 @@ private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 
 @ExperimentalComposeApi
 fun main() {
+    GlobalScope.launch {
+        while (isActive) {
+            val result = WindowsRegistry.getEntry("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                    "AppsUseLightTheme", "REG_DWORD")
+            val newMode = result == "0x0"
+            if (isInDarkMode != newMode) {
+                isInDarkMode = newMode
+            }
+            delay(1000)
+        }
+    }
     invokeLater {
         configureMenuBar()
         AppWindow(
