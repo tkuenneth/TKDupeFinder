@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
-import com.thomaskuenneth.NativeParameterStoreAccess
+import com.thomaskuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.getWindowsRegistryEntry
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -67,7 +67,7 @@ private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 fun main() {
     GlobalScope.launch {
         while (isActive) {
-            val result = NativeParameterStoreAccess.getWindowsRegistryEntry("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            val result = getWindowsRegistryEntry("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
                     "AppsUseLightTheme", "REG_DWORD")
             val newMode = result == "0x0"
             if (isInDarkMode != newMode) {

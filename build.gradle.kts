@@ -9,11 +9,13 @@ plugins {
 repositories {
     jcenter()
     maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+    mavenLocal()
 }
 
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+    implementation("com.thomaskuenneth:nativeparameterstoreaccess:0.1.0")
 }
 
 compose.desktop {
