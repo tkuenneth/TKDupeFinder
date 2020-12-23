@@ -66,14 +66,18 @@ private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 
 fun isSystemInDarkTheme(): Boolean {
     val os = System.getProperty("os.name", "")
-    return if (os.contains("Windows")) {
-        val result = getWindowsRegistryEntry("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                "AppsUseLightTheme", "REG_DWORD")
-        result == "0x0"
-    } else if (os.contains("Mac OS X")) {
-        val result = getDefaultsEntry("AppleInterfaceStyle")
-        result == "Dark"
-    } else false
+    return when {
+        os.contains("Windows") -> {
+            val result = getWindowsRegistryEntry("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                    "AppsUseLightTheme", "REG_DWORD")
+            result == "0x0"
+        }
+        os.contains("Mac OS X") -> {
+            val result = getDefaultsEntry("AppleInterfaceStyle").trim()
+            result == "Dark"
+        }
+        else -> false
+    }
 }
 
 @ExperimentalComposeApi
