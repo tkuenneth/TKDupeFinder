@@ -5,23 +5,35 @@ import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class WindowsRegistry {
+public class NativeParameterStoreAccess {
 
-    private static final Logger LOGGER = Logger.getLogger(WindowsRegistry.class.getPackageName());
+    private static final Logger LOGGER = Logger.getLogger(NativeParameterStoreAccess.class.getPackageName());
 
-    public static String getEntry(String key, String value, String type) {
-        StringBuilder sbIS = new StringBuilder();
-        StringBuilder sbES = new StringBuilder();
+    public static String getWindowsRegistryEntry(String key, String value, String type) {
+        StringBuilder stdin = new StringBuilder();
+        StringBuilder stderr = new StringBuilder();
         String result = null;
+        String cmd = String.format("reg query \"%s\" /v %s", key, value);
+        if (execute(stdin, stderr, cmd)) {
+            String temp = stdin.toString();
+            int pos = temp.indexOf(type);
+            if (pos >= 0) {
+                result = temp.substring(pos + type.length()).trim();
+            }
+        }
+        return result;
+    }
+
+    private static boolean execute(StringBuilder sbIS, StringBuilder sbES, String cmd) {
+        boolean success = false;
         try {
-            String cmd = String.format("reg query \"%s\" /v %s", key, value);
             Process p = Runtime.getRuntime().exec(cmd);
             InputStream is = p.getInputStream();
             InputStream es = p.getErrorStream();
             try {
                 p.waitFor();
             } catch (InterruptedException e) {
-                LOGGER.log(Level.SEVERE, e.getLocalizedMessage());
+                LOGGER.log(Level.SEVERE, e.getMessage(), e);
             }
             boolean hasData = true;
             int isData;
@@ -45,17 +57,13 @@ public class WindowsRegistry {
                 }
                 hasData = isData != -1 || esData != -1;
             }
-            result = sbIS.toString();
-            int pos = result.indexOf(type);
-            if (pos >= 0) {
-                result = result.substring(pos + type.length()).trim();
-            }
+            success = true;
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, e.getLocalizedMessage());
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
         }
         if (sbES.length() > 0) {
             LOGGER.log(Level.SEVERE, sbES.toString());
         }
-        return result;
+        return success;
     }
 }
