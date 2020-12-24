@@ -73,7 +73,7 @@ fun isSystemInDarkTheme(): Boolean {
             result == "0x0"
         }
         os.contains("Mac OS X") -> {
-            val result = getDefaultsEntry("AppleInterfaceStyle").trim()
+            val result = getDefaultsEntry("AppleInterfaceStyle")
             result == "Dark"
         }
         else -> false
