@@ -15,7 +15,7 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
-    implementation("com.thomaskuenneth:nativeparameterstoreaccess:0.1.0")
+    implementation("com.github.tkuenneth:nativeparameterstoreaccess:0.1.0")
 }
 
 compose.desktop {
