@@ -37,8 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
-import com.thomaskuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.getDefaultsEntry
-import com.thomaskuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.getWindowsRegistryEntry
+import com.thomaskuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -65,14 +64,13 @@ private var isInDarkMode: Boolean by observable(false) { _, oldValue, newValue -
 private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 
 fun isSystemInDarkTheme(): Boolean {
-    val os = System.getProperty("os.name", "")
     return when {
-        os.contains("Windows") -> {
+        IS_WINDOWS -> {
             val result = getWindowsRegistryEntry("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
                     "AppsUseLightTheme", "REG_DWORD")
             result == "0x0"
         }
-        os.contains("Mac OS X") -> {
+        IS_MACOS -> {
             val result = getDefaultsEntry("AppleInterfaceStyle")
             result == "Dark"
         }
