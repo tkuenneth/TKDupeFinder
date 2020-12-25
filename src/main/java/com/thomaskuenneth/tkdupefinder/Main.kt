@@ -69,7 +69,7 @@ fun isSystemInDarkTheme(): Boolean {
             val result = getWindowsRegistryEntry(
                     "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
                     "AppsUseLightTheme",
-                    "REG_DWORD")
+                    REG_TYPE.REG_DWORD)
             result == "0x0"
         }
         IS_MACOS -> {
