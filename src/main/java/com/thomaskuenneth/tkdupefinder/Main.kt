@@ -40,7 +40,6 @@ import androidx.compose.ui.window.MenuItem
 import com.github.tkuenneth.nativeparameterstoreaccess.MacOSDefaults.getDefaultsEntry
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_WINDOWS
-import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry.REG_TYPE.REG_DWORD
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry.getWindowsRegistryEntry
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -72,9 +71,8 @@ fun isSystemInDarkTheme(): Boolean {
         IS_WINDOWS -> {
             val result = getWindowsRegistryEntry(
                     "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                    "AppsUseLightTheme",
-                    REG_DWORD)
-            result == "0x0"
+                    "AppsUseLightTheme")
+            result == 0x0
         }
         IS_MACOS -> {
             val result = getDefaultsEntry("AppleInterfaceStyle")
