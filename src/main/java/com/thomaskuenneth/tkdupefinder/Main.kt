@@ -61,7 +61,7 @@ import kotlin.properties.Delegates.observable
 
 private val df = TKDupeFinder()
 
-private var isInDarkMode: Boolean by observable(false) { _, oldValue, newValue ->
+private var isInDarkMode by observable(false) { _, oldValue, newValue ->
     onIsInDarkModeChanged?.let { it(oldValue, newValue) }
 }
 private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
@@ -144,16 +144,18 @@ fun TKDupeFinderContent() {
     val selected = remember { mutableStateMapOf<Int, Boolean>() }
     val scanning = remember { mutableStateOf(false) }
     DesktopMaterialTheme(colors = colors) {
-        Column() {
-            FirstRow(name, currentPos, checksums, selected, scanning)
-            if (scanning.value) {
-                Box(modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+        Surface {
+            Column() {
+                FirstRow(name, currentPos, checksums, selected, scanning)
+                if (scanning.value) {
+                    Box(modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    SecondRow(currentPos, checksums.value.size, selected)
+                    ThirdRow(currentPos.value, checksums.value, selected)
                 }
-            } else {
-                SecondRow(currentPos, checksums.value.size, selected)
-                ThirdRow(currentPos.value, checksums.value, selected)
             }
         }
     }
