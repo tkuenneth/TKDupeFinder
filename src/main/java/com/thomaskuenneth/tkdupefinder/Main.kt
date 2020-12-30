@@ -21,7 +21,7 @@ import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumnForIndexed
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -264,19 +264,21 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     val numSelected = selectedFiles.size
     var isConfirmDialogVisible by remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
-        LazyColumnForIndexed(items,
-                modifier = Modifier.weight(1.0f),
-                itemContent = { index, item ->
-                    val current = selected[index] ?: false
-                    ListItem(secondaryText = { Text(item.parent) },
-                            modifier = Modifier.toggleable(onValueChange = {
-                                selected[index] = !current
-                            },
-                                    value = current)
-                                    .background(if (current)
-                                        Color.LightGray else Color.Transparent),
-                            text = { Text(item.name) })
-                })
+        LazyColumn(
+                modifier = Modifier.weight(1.0f))
+        {
+            itemsIndexed(items) { index, item ->
+                val current = selected[index] ?: false
+                ListItem(secondaryText = { Text(item.parent) },
+                        modifier = Modifier.toggleable(onValueChange = {
+                            selected[index] = !current
+                        },
+                                value = current)
+                                .background(if (current)
+                                    Color.LightGray else Color.Transparent),
+                        text = { Text(item.name) })
+            }
+        }
         MySpacer()
         Column() {
             Button(onClick = {
