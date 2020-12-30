@@ -22,7 +22,8 @@ compose.desktop {
     application {
         mainClass = "com.thomaskuenneth.tkdupefinder.MainKt"
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg)
+            targetFormats(TargetFormat.Dmg,
+                    TargetFormat.Msi)
             packageName = "TKDupeFinder"
             version = "0.1-SNAPSHOT"
             description = "Find duplicate files"
@@ -30,6 +31,9 @@ compose.desktop {
             vendor = "Thomas Kuenneth"
             macOS {
                 iconFile.set(project.file("app_icon.icns"))
+            }
+            windows {
+                iconFile.set(project.file("artwork/app:icon.ico"))
             }
         }
     }
