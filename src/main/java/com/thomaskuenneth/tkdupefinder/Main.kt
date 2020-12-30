@@ -37,10 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
-import com.github.tkuenneth.nativeparameterstoreaccess.MacOSDefaults.getDefaultsEntry
-import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
-import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_WINDOWS
-import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry.getWindowsRegistryEntry
 import com.thomaskuenneth.isSystemInDarkTheme
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -55,12 +51,14 @@ import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.io.File
+import java.util.*
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities.invokeLater
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
 private val df = TKDupeFinder()
+private val resourceBundle = ResourceBundle.getBundle("strings")
 
 private var isInDarkMode by observable(false) { _, oldValue, newValue ->
     onIsInDarkModeChanged?.let { it(oldValue, newValue) }
@@ -81,7 +79,7 @@ fun main() {
     invokeLater {
         configureMenuBar()
         AppWindow(
-                title = "TKDupeFinder",
+                title = resourceBundle.getString("tkdupefinder"),
         ).show {
             TKDupeFinderContent()
         }
@@ -91,16 +89,16 @@ fun main() {
 private fun configureMenuBar() {
     val menuBar = MenuBar()
     if (!System.getProperty("os.name", "").contains("mac os x", true)) {
-        menuBar.add(Menu("File", MenuItem(
-                name = "Quit",
+        menuBar.add(Menu(resourceBundle.getString("file"), MenuItem(
+                name = resourceBundle.getString("quit"),
                 onClick = {
                     AppManager.exit()
                 },
                 shortcut = KeyStroke.getKeyStroke(
                         KeyEvent.VK_F4, ActionEvent.ALT_MASK)
         )))
-        menuBar.add(Menu("Help", MenuItem(
-                name = "About",
+        menuBar.add(Menu(resourceBundle.getString("help"), MenuItem(
+                name = resourceBundle.getString("about"),
                 onClick = {
                     isInDarkMode = !isInDarkMode
                 },
@@ -196,7 +194,7 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                     function()
                 },
                 placeholder = {
-                    Text("Base directory")
+                    Text(resourceBundle.getString("base.directory"))
                 },
                 modifier = Modifier.alignBy(LastBaseline)
                         .weight(1.0f),
@@ -210,7 +208,7 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                 modifier = Modifier.alignByBaseline().width(100.dp),
                 enabled = enabled
         ) {
-            Text(if (scanning.value) "Cancel" else "Find")
+            Text(resourceBundle.getString(if (scanning.value) "cancel" else "find"))
         }
     }
 }
@@ -242,9 +240,9 @@ fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
         MySpacer()
         var msg = if (checksumsSize > 0) {
             "${currentPos.value + 1} of $checksumsSize"
-        } else "No duplicates found"
+        } else resourceBundle.getString("no.duplicates.found")
         if (scanInProgress) {
-            msg = "$msg (cancelled)"
+            msg = "$msg (${resourceBundle.getString("cancelled")})"
         }
         Text(text = msg)
     }
@@ -303,7 +301,7 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
                     isConfirmDialogVisible = false
                 },
                         title = {
-                            Text("Confirm deletion of...")
+                            Text(resourceBundle.getString("confirm_deletion"))
                         },
                         text = {
                             ScrollableColumn {
@@ -322,7 +320,7 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
                                 }
                                 selected.clear()
                             }) {
-                                Text("Delete")
+                                Text(resourceBundle.getString("delete"))
                             }
                         })
             }
