@@ -57,13 +57,16 @@ import javax.swing.SwingUtilities.invokeLater
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
+val RESOURCE_BUNDLE: ResourceBundle = ResourceBundle.getBundle("strings")
+
 private val df = TKDupeFinder()
-private val resourceBundle = ResourceBundle.getBundle("strings")
 
 private var isInDarkMode by observable(false) { _, oldValue, newValue ->
     onIsInDarkModeChanged?.let { it(oldValue, newValue) }
 }
 private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
+
+private lateinit var showAboutDialog: MutableState<Boolean>
 
 @ExperimentalComposeApi
 fun main() {
@@ -79,7 +82,7 @@ fun main() {
     invokeLater {
         configureMenuBar()
         AppWindow(
-                title = resourceBundle.getString("tkdupefinder"),
+                title = RESOURCE_BUNDLE.getString("tkdupefinder"),
         ).show {
             TKDupeFinderContent()
         }
@@ -89,21 +92,19 @@ fun main() {
 private fun configureMenuBar() {
     val menuBar = MenuBar()
     if (!System.getProperty("os.name", "").contains("mac os x", true)) {
-        menuBar.add(Menu(resourceBundle.getString("file"), MenuItem(
-                name = resourceBundle.getString("quit"),
+        menuBar.add(Menu(RESOURCE_BUNDLE.getString("file"), MenuItem(
+                name = RESOURCE_BUNDLE.getString("quit"),
                 onClick = {
                     AppManager.exit()
                 },
                 shortcut = KeyStroke.getKeyStroke(
                         KeyEvent.VK_F4, ActionEvent.ALT_MASK)
         )))
-        menuBar.add(Menu(resourceBundle.getString("help"), MenuItem(
-                name = resourceBundle.getString("about"),
+        menuBar.add(Menu(RESOURCE_BUNDLE.getString("help"), MenuItem(
+                name = RESOURCE_BUNDLE.getString("about"),
                 onClick = {
-                    isInDarkMode = !isInDarkMode
-                },
-                shortcut = KeyStroke.getKeyStroke(
-                        KeyEvent.VK_T, ActionEvent.CTRL_MASK)
+                    showAboutDialog.value = true
+                }
         )))
     }
     AppManager.setMenu(menuBar)
@@ -117,6 +118,7 @@ private fun colors(): Colors = if (isInDarkMode) {
 
 @Composable
 fun TKDupeFinderContent() {
+    showAboutDialog = remember { mutableStateOf(false) }
     var colors by remember { mutableStateOf(colors()) }
     onIsInDarkModeChanged = { _, _ ->
         colors = colors()
@@ -161,6 +163,7 @@ fun TKDupeFinderContent() {
     val window = AppManager.windows.first().window
     window.contentPane.dropTarget = target
     window.iconImage = Toolkit.getDefaultToolkit().getImage("app_icon.png")
+    AboutDialog(showAboutDialog)
 }
 
 @Composable
@@ -194,7 +197,7 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                     function()
                 },
                 placeholder = {
-                    Text(resourceBundle.getString("base.directory"))
+                    Text(RESOURCE_BUNDLE.getString("base.directory"))
                 },
                 modifier = Modifier.alignBy(LastBaseline)
                         .weight(1.0f),
@@ -208,7 +211,7 @@ fun FirstRow(name: MutableState<TextFieldValue>,
                 modifier = Modifier.alignByBaseline().width(100.dp),
                 enabled = enabled
         ) {
-            Text(resourceBundle.getString(if (scanning.value) "cancel" else "find"))
+            Text(RESOURCE_BUNDLE.getString(if (scanning.value) "cancel" else "find"))
         }
     }
 }
@@ -240,9 +243,9 @@ fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
         MySpacer()
         var msg = if (checksumsSize > 0) {
             "${currentPos.value + 1} of $checksumsSize"
-        } else resourceBundle.getString("no.duplicates.found")
+        } else RESOURCE_BUNDLE.getString("no.duplicates.found")
         if (scanInProgress) {
-            msg = "$msg (${resourceBundle.getString("cancelled")})"
+            msg = "$msg (${RESOURCE_BUNDLE.getString("cancelled")})"
         }
         Text(text = msg)
     }
@@ -303,7 +306,7 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
                     isConfirmDialogVisible = false
                 },
                         title = {
-                            Text(resourceBundle.getString("confirm_deletion"))
+                            Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
                         },
                         text = {
                             ScrollableColumn {
@@ -322,7 +325,7 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
                                 }
                                 selected.clear()
                             }) {
-                                Text(resourceBundle.getString("delete"))
+                                Text(RESOURCE_BUNDLE.getString("delete"))
                             }
                         })
             }
