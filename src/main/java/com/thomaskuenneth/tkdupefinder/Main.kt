@@ -41,6 +41,7 @@ import com.github.tkuenneth.nativeparameterstoreaccess.MacOSDefaults.getDefaults
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_WINDOWS
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry.getWindowsRegistryEntry
+import com.thomaskuenneth.isSystemInDarkTheme
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -65,22 +66,6 @@ private var isInDarkMode by observable(false) { _, oldValue, newValue ->
     onIsInDarkModeChanged?.let { it(oldValue, newValue) }
 }
 private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
-
-fun isSystemInDarkTheme(): Boolean {
-    return when {
-        IS_WINDOWS -> {
-            val result = getWindowsRegistryEntry(
-                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                    "AppsUseLightTheme")
-            result == 0x0
-        }
-        IS_MACOS -> {
-            val result = getDefaultsEntry("AppleInterfaceStyle")
-            result == "Dark"
-        }
-        else -> false
-    }
-}
 
 @ExperimentalComposeApi
 fun main() {
@@ -114,15 +99,15 @@ private fun configureMenuBar() {
                 shortcut = KeyStroke.getKeyStroke(
                         KeyEvent.VK_F4, ActionEvent.ALT_MASK)
         )))
+        menuBar.add(Menu("Help", MenuItem(
+                name = "About",
+                onClick = {
+                    isInDarkMode = !isInDarkMode
+                },
+                shortcut = KeyStroke.getKeyStroke(
+                        KeyEvent.VK_T, ActionEvent.CTRL_MASK)
+        )))
     }
-    menuBar.add(Menu("Appearance", MenuItem(
-            name = "Toggle Colors",
-            onClick = {
-                isInDarkMode = !isInDarkMode
-            },
-            shortcut = KeyStroke.getKeyStroke(
-                    KeyEvent.VK_T, ActionEvent.CTRL_MASK)
-    )))
     AppManager.setMenu(menuBar)
 }
 
