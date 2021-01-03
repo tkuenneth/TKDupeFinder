@@ -30,6 +30,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
@@ -52,8 +53,10 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
-import javax.swing.KeyStroke
+import javax.swing.*
 import javax.swing.SwingUtilities.invokeLater
+import javax.swing.UIManager.getDefaults
+import javax.swing.plaf.ColorUIResource
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
@@ -80,8 +83,10 @@ fun main() {
         }
     }
     invokeLater {
+        JFrame.setDefaultLookAndFeelDecorated(true)
         configureMenuBar()
         AppWindow(
+                undecorated = true,
                 title = RESOURCE_BUNDLE.getString("tkdupefinder"),
         ).show {
             TKDupeFinderContent()
@@ -164,6 +169,14 @@ fun TKDupeFinderContent() {
     window.contentPane.dropTarget = target
     window.iconImage = Toolkit.getDefaultToolkit().getImage("app_icon.png")
     AboutDialog(showAboutDialog)
+    getDefaults()["activeCaption"] =
+            ColorUIResource(colors.background.toArgb())
+    getDefaults()["activeCaptionText"] =
+            ColorUIResource(colors.primary.toArgb())
+    window.rootPane.windowDecorationStyle = JRootPane.FRAME
+    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName())
+    println(UIManager.getLookAndFeel().supportsWindowDecorations)
+    SwingUtilities.updateComponentTreeUI(window.rootPane)
 }
 
 @Composable
