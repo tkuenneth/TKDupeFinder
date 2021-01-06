@@ -15,22 +15,27 @@
  */
 package com.thomaskuenneth
 
+import com.github.tkuenneth.nativeparameterstoreaccess.Dconf
+import com.github.tkuenneth.nativeparameterstoreaccess.Dconf.HAS_DCONF
 import com.github.tkuenneth.nativeparameterstoreaccess.MacOSDefaults
-import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess
+import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
+import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_WINDOWS
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry
 
-fun isSystemInDarkTheme(): Boolean {
-    return when {
-        NativeParameterStoreAccess.IS_WINDOWS -> {
-            val result = WindowsRegistry.getWindowsRegistryEntry(
-                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                    "AppsUseLightTheme")
-            result == 0x0
-        }
-        NativeParameterStoreAccess.IS_MACOS -> {
-            val result = MacOSDefaults.getDefaultsEntry("AppleInterfaceStyle")
-            result == "Dark"
-        }
-        else -> false
+fun isSystemInDarkTheme(): Boolean = when {
+    IS_WINDOWS -> {
+        val result = WindowsRegistry.getWindowsRegistryEntry(
+                "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                "AppsUseLightTheme")
+        result == 0x0
     }
+    IS_MACOS -> {
+        val result = MacOSDefaults.getDefaultsEntry("AppleInterfaceStyle")
+        result == "Dark"
+    }
+    HAS_DCONF -> {
+        val result = Dconf.getDconfEntry("/org/gnome/desktop/interface/gtk-theme")
+        result.toLowerCase().contains("dark")
+    }
+    else -> false
 }

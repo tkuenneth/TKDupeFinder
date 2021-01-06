@@ -30,7 +30,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
@@ -38,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
+import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
 import com.thomaskuenneth.isSystemInDarkTheme
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -55,8 +55,6 @@ import java.io.File
 import java.util.*
 import javax.swing.*
 import javax.swing.SwingUtilities.invokeLater
-import javax.swing.UIManager.getDefaults
-import javax.swing.plaf.ColorUIResource
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
@@ -83,42 +81,15 @@ fun main() {
         }
     }
     invokeLater {
-        JFrame.setDefaultLookAndFeelDecorated(true)
+        // JFrame.setDefaultLookAndFeelDecorated(true)
         configureMenuBar()
         AppWindow(
-                undecorated = true,
+                // undecorated = true,
                 title = RESOURCE_BUNDLE.getString("tkdupefinder"),
         ).show {
             TKDupeFinderContent()
         }
     }
-}
-
-private fun configureMenuBar() {
-    val menuBar = MenuBar()
-    if (!System.getProperty("os.name", "").contains("mac os x", true)) {
-        menuBar.add(Menu(RESOURCE_BUNDLE.getString("file"), MenuItem(
-                name = RESOURCE_BUNDLE.getString("quit"),
-                onClick = {
-                    AppManager.exit()
-                },
-                shortcut = KeyStroke.getKeyStroke(
-                        KeyEvent.VK_F4, ActionEvent.ALT_MASK)
-        )))
-        menuBar.add(Menu(RESOURCE_BUNDLE.getString("help"), MenuItem(
-                name = RESOURCE_BUNDLE.getString("about"),
-                onClick = {
-                    showAboutDialog.value = true
-                }
-        )))
-    }
-    AppManager.setMenu(menuBar)
-}
-
-private fun colors(): Colors = if (isInDarkMode) {
-    darkColors()
-} else {
-    lightColors()
 }
 
 @Composable
@@ -169,14 +140,9 @@ fun TKDupeFinderContent() {
     window.contentPane.dropTarget = target
     window.iconImage = Toolkit.getDefaultToolkit().getImage("app_icon.png")
     AboutDialog(showAboutDialog)
-    getDefaults()["activeCaption"] =
-            ColorUIResource(colors.background.toArgb())
-    getDefaults()["activeCaptionText"] =
-            ColorUIResource(colors.primary.toArgb())
-    window.rootPane.windowDecorationStyle = JRootPane.FRAME
-    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName())
-    println(UIManager.getLookAndFeel().supportsWindowDecorations)
-    SwingUtilities.updateComponentTreeUI(window.rootPane)
+//    window.rootPane.windowDecorationStyle = JRootPane.FRAME
+//    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+//    SwingUtilities.updateComponentTreeUI(window.rootPane)
 }
 
 @Composable
@@ -372,4 +338,31 @@ private fun stopScan(currentPos: MutableState<Int>,
     currentPos.value = 0
     checksums.value = df.checksums.toList()
     scanning.value = false
+}
+
+private fun configureMenuBar() {
+    val menuBar = MenuBar()
+    if (!IS_MACOS) {
+        menuBar.add(Menu(RESOURCE_BUNDLE.getString("file"), MenuItem(
+                name = RESOURCE_BUNDLE.getString("quit"),
+                onClick = {
+                    AppManager.exit()
+                },
+                shortcut = KeyStroke.getKeyStroke(
+                        KeyEvent.VK_F4, ActionEvent.ALT_MASK)
+        )))
+        menuBar.add(Menu(RESOURCE_BUNDLE.getString("help"), MenuItem(
+                name = RESOURCE_BUNDLE.getString("about"),
+                onClick = {
+                    showAboutDialog.value = true
+                }
+        )))
+    }
+    AppManager.setMenu(menuBar)
+}
+
+private fun colors(): Colors = if (isInDarkMode) {
+    darkColors()
+} else {
+    lightColors()
 }
