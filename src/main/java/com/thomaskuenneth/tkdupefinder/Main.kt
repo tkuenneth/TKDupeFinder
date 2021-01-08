@@ -321,7 +321,6 @@ private fun startScan(baseDir: String, currentPos: MutableState<Int>,
         df.clear()
         scanInProgress = true
         df.scanDir(baseDir, true)
-        df.removeSingles()
         scanInProgress = false
         invokeLater {
             stopScan(currentPos, checksums, scanning)
@@ -335,6 +334,7 @@ private fun stopScan(currentPos: MutableState<Int>,
     if (worker?.isAlive == true) {
         worker?.stop()
     }
+    df.removeSingles()
     currentPos.value = 0
     checksums.value = df.checksums.toList()
     scanning.value = false
