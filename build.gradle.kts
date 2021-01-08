@@ -3,7 +3,7 @@ import org.jetbrains.compose.desktop.application.dsl.*
 
 plugins {
     kotlin("jvm") version "1.4.21"
-    id("org.jetbrains.compose") version "0.3.0-build138"
+    id("org.jetbrains.compose") version "0.3.0-build139"
 }
 
 repositories {
