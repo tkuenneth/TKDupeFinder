@@ -53,7 +53,7 @@ import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
 import java.io.File
 import java.util.*
-import javax.swing.*
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities.invokeLater
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
@@ -240,11 +240,11 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     val items = if (checksums.isNotEmpty())
         df.getFiles(checksums[currentPos]) else emptyList()
     val selectedFiles = mutableListOf<File>()
-    selected.entries.forEachIndexed { index, entry ->
-        if (entry.value) selectedFiles.add(items[index])
+    selected.entries.forEach { entry ->
+        if (entry.value) selectedFiles.add(items[entry.key])
     }
     val numSelected = selectedFiles.size
-    var isConfirmDialogVisible by remember { mutableStateOf(false) }
+    val isConfirmDialogVisible = remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         LazyColumn(
                 modifier = Modifier.weight(1.0f))
@@ -274,41 +274,50 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
-                isConfirmDialogVisible = true
+                isConfirmDialogVisible.value = true
             },
                     modifier = Modifier.width(100.dp),
                     enabled = numSelected > 0 && numSelected < items.size) {
                 Text("Delete")
             }
-            if (isConfirmDialogVisible) {
-                AlertDialog(onDismissRequest = {
-                    isConfirmDialogVisible = false
-                },
-                        title = {
-                            Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
-                        },
-                        text = {
-                            ScrollableColumn {
-                                val sb = StringBuilder()
-                                selectedFiles.forEach {
-                                    sb.append(checksums[currentPos], it.name).appendLine()
-                                }
-                                Text(sb.toString())
-                            }
-                        },
-                        confirmButton = {
-                            Button(onClick = {
-                                isConfirmDialogVisible = false
-                                selectedFiles.forEach {
-                                    df.deleteFile(checksums[currentPos], it)
-                                }
-                                selected.clear()
-                            }) {
-                                Text(RESOURCE_BUNDLE.getString("delete"))
-                            }
-                        })
-            }
         }
+    }
+    ConfirmDeleteDialog(isConfirmDialogVisible, selectedFiles, checksums, currentPos, selected)
+}
+
+@Composable
+fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
+                        selectedFiles: MutableList<File>,
+                        checksums: List<String>,
+                        currentPos: Int,
+                        selected: SnapshotStateMap<Int, Boolean>) {
+    if (isConfirmDialogVisible.value) {
+        AlertDialog(onDismissRequest = {
+            isConfirmDialogVisible.value = false
+        },
+                title = {
+                    Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
+                },
+                text = {
+                    ScrollableColumn {
+                        val sb = StringBuilder()
+                        selectedFiles.forEach {
+                            sb.append(checksums[currentPos], it.name).appendLine()
+                        }
+                        Text(sb.toString())
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        isConfirmDialogVisible.value = false
+                        selectedFiles.forEach {
+                            df.deleteFile(checksums[currentPos], it)
+                        }
+                        selected.clear()
+                    }) {
+                        Text(RESOURCE_BUNDLE.getString("delete"))
+                    }
+                })
     }
 }
 
