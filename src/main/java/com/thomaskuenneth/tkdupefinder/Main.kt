@@ -20,6 +20,7 @@ import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.toggleable
@@ -34,6 +35,7 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DesktopDialogProperties
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
@@ -295,6 +297,9 @@ fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
         AlertDialog(onDismissRequest = {
             isConfirmDialogVisible.value = false
         },
+                properties = DesktopDialogProperties(undecorated = true),
+                modifier = Modifier.border(width = 1.dp,
+                        MaterialTheme.colors.primary),
                 title = {
                     Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
                 },
@@ -305,6 +310,13 @@ fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
                             sb.append(checksums[currentPos], it.name).appendLine()
                         }
                         Text(sb.toString())
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        isConfirmDialogVisible.value = false
+                    }) {
+                        Text(RESOURCE_BUNDLE.getString("cancel"))
                     }
                 },
                 confirmButton = {
