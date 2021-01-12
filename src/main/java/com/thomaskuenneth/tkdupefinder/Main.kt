@@ -46,6 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.awt.Desktop
+import java.awt.Point
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
@@ -53,10 +54,12 @@ import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.io.File
 import java.util.*
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities.invokeLater
+import javax.swing.event.MouseInputAdapter
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
@@ -330,6 +333,25 @@ fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
                         Text(RESOURCE_BUNDLE.getString("delete"))
                     }
                 })
+
+        val window = AppManager.windows.last().window
+        val component = window.contentPane.getComponent(0)
+        val adapter = object : MouseInputAdapter() {
+            private lateinit var initialClick: Point
+
+            override fun mousePressed(e: MouseEvent) {
+                initialClick = e.point
+            }
+
+            override fun mouseDragged(e: MouseEvent) {
+                val dx = e.x - initialClick.x
+                val dy = e.y - initialClick.y
+                window.setLocation(window.location.x + dx,
+                        window.location.y + dy)
+            }
+        }
+        component.addMouseMotionListener(adapter)
+        component.addMouseListener(adapter)
     }
 }
 
