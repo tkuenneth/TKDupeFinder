@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 - 2020 Thomas Kuenneth
+ * Copyright 2011 - 2021 Thomas Kuenneth
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3
@@ -18,12 +18,14 @@ package com.thomaskuenneth.tkdupefinder
 import androidx.compose.desktop.AppManager
 import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
-import androidx.compose.foundation.ScrollableColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -35,7 +37,7 @@ import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DesktopDialogProperties
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Menu
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.MenuItem
@@ -74,6 +76,7 @@ private var onIsInDarkModeChanged: ((Boolean, Boolean) -> Unit)? = null
 
 private lateinit var showAboutDialog: MutableState<Boolean>
 
+@ExperimentalMaterialApi
 @ExperimentalComposeApi
 fun main() {
     GlobalScope.launch {
@@ -89,14 +92,15 @@ fun main() {
         // JFrame.setDefaultLookAndFeelDecorated(true)
         configureMenuBar()
         AppWindow(
-                // undecorated = true,
-                title = RESOURCE_BUNDLE.getString("tkdupefinder"),
+            // undecorated = true,
+            title = RESOURCE_BUNDLE.getString("tkdupefinder"),
         ).show {
             TKDupeFinderContent()
         }
     }
 }
 
+@ExperimentalMaterialApi
 @Composable
 fun TKDupeFinderContent() {
     showAboutDialog = remember { mutableStateOf(false) }
@@ -114,8 +118,10 @@ fun TKDupeFinderContent() {
             Column() {
                 FirstRow(name, currentPos, checksums, selected, scanning)
                 if (scanning.value) {
-                    Box(modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator()
                     }
                 } else {
@@ -131,8 +137,9 @@ fun TKDupeFinderContent() {
             try {
                 evt.acceptDrop(DnDConstants.ACTION_REFERENCE)
                 val droppedFiles = evt
-                        .transferable.getTransferData(
-                                DataFlavor.javaFileListFlavor) as List<*>
+                    .transferable.getTransferData(
+                        DataFlavor.javaFileListFlavor
+                    ) as List<*>
                 droppedFiles.first()?.let {
                     name.value = TextFieldValue((it as File).absolutePath)
                 }
@@ -151,11 +158,13 @@ fun TKDupeFinderContent() {
 }
 
 @Composable
-fun FirstRow(name: MutableState<TextFieldValue>,
-             currentPos: MutableState<Int>,
-             checksums: MutableState<List<String>>,
-             selected: SnapshotStateMap<Int, Boolean>,
-             scanning: MutableState<Boolean>) {
+fun FirstRow(
+    name: MutableState<TextFieldValue>,
+    currentPos: MutableState<Int>,
+    checksums: MutableState<List<String>>,
+    selected: SnapshotStateMap<Int, Boolean>,
+    scanning: MutableState<Boolean>
+) {
     val enabled = scanning.value || File(name.value.text).isDirectory
     val function = {
         if (enabled) {
@@ -170,30 +179,28 @@ fun FirstRow(name: MutableState<TextFieldValue>,
         }
     }
     Row(
-            modifier = Modifier.fillMaxWidth()
-                    .padding(8.dp)
+        modifier = Modifier.fillMaxWidth()
+            .padding(8.dp)
     ) {
         TextField(
-                value = name.value,
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Search),
-                onImeActionPerformed = { _, _ ->
-                    function()
-                },
-                placeholder = {
-                    Text(RESOURCE_BUNDLE.getString("base.directory"))
-                },
-                modifier = Modifier.alignBy(LastBaseline)
-                        .weight(1.0f),
-                onValueChange = {
-                    name.value = it
-                },
+            name.value, { name.value = it },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Search),
+            placeholder = {
+                Text(RESOURCE_BUNDLE.getString("base.directory"))
+            },
+            modifier = Modifier.alignBy(LastBaseline)
+                .weight(1.0f),
+            keyboardActions = KeyboardActions(onDone = {
+                function()
+            }),
+//            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go)
         )
         MySpacer()
         Button(
-                onClick = function,
-                modifier = Modifier.alignByBaseline().width(100.dp),
-                enabled = enabled
+            onClick = function,
+            modifier = Modifier.alignByBaseline().width(100.dp),
+            enabled = enabled
         ) {
             Text(RESOURCE_BUNDLE.getString(if (scanning.value) "cancel" else "find"))
         }
@@ -201,27 +208,33 @@ fun FirstRow(name: MutableState<TextFieldValue>,
 }
 
 @Composable
-fun SecondRow(currentPos: MutableState<Int>, checksumsSize: Int,
-              selected: SnapshotStateMap<Int, Boolean>) {
+fun SecondRow(
+    currentPos: MutableState<Int>, checksumsSize: Int,
+    selected: SnapshotStateMap<Int, Boolean>
+) {
     val current = currentPos.value
     Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-                    .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+            .padding(8.dp),
     ) {
-        Button(onClick = {
-            selected.clear()
-            currentPos.value -= 1
-        },
-                enabled = current > 0) {
+        Button(
+            onClick = {
+                selected.clear()
+                currentPos.value -= 1
+            },
+            enabled = current > 0
+        ) {
             Text("\u140A")
         }
         MySpacer()
-        Button(onClick = {
-            selected.clear()
-            currentPos.value += 1
-        },
-                enabled = (current + 1) < checksumsSize) {
+        Button(
+            onClick = {
+                selected.clear()
+                currentPos.value += 1
+            },
+            enabled = (current + 1) < checksumsSize
+        ) {
             Text("\u1405")
         }
         MySpacer()
@@ -240,6 +253,7 @@ fun MySpacer() {
     Spacer(modifier = Modifier.width(8.dp))
 }
 
+@ExperimentalMaterialApi
 @Composable
 fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMap<Int, Boolean>) {
     val items = if (checksums.isNotEmpty())
@@ -252,37 +266,46 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     val isConfirmDialogVisible = remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         LazyColumn(
-                modifier = Modifier.weight(1.0f))
+            modifier = Modifier.weight(1.0f)
+        )
         {
             itemsIndexed(items) { index, item ->
                 val current = selected[index] ?: false
                 ListItem(secondaryText = { Text(item.parent) },
-                        modifier = Modifier.toggleable(onValueChange = {
+                    modifier = Modifier.toggleable(
+                        onValueChange = {
                             selected[index] = !current
                         },
-                                value = current)
-                                .background(if (current)
-                                    Color.LightGray else Color.Transparent),
-                        text = { Text(item.name) })
+                        value = current
+                    )
+                        .background(
+                            if (current)
+                                Color.LightGray else Color.Transparent
+                        ),
+                    text = { Text(item.name) })
             }
         }
         MySpacer()
         Column() {
-            Button(onClick = {
-                selectedFiles.forEach {
-                    Desktop.getDesktop().open(it)
-                }
-            },
-                    modifier = Modifier.width(100.dp),
-                    enabled = numSelected > 0) {
+            Button(
+                onClick = {
+                    selectedFiles.forEach {
+                        Desktop.getDesktop().open(it)
+                    }
+                },
+                modifier = Modifier.width(100.dp),
+                enabled = numSelected > 0
+            ) {
                 Text("Show")
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = {
-                isConfirmDialogVisible.value = true
-            },
-                    modifier = Modifier.width(100.dp),
-                    enabled = numSelected > 0 && numSelected < items.size) {
+            Button(
+                onClick = {
+                    isConfirmDialogVisible.value = true
+                },
+                modifier = Modifier.width(100.dp),
+                enabled = numSelected > 0 && numSelected < items.size
+            ) {
                 Text("Delete")
             }
         }
@@ -290,49 +313,53 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     ConfirmDeleteDialog(isConfirmDialogVisible, selectedFiles, checksums, currentPos, selected)
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
-                        selectedFiles: MutableList<File>,
-                        checksums: List<String>,
-                        currentPos: Int,
-                        selected: SnapshotStateMap<Int, Boolean>) {
+fun ConfirmDeleteDialog(
+    isConfirmDialogVisible: MutableState<Boolean>,
+    selectedFiles: MutableList<File>,
+    checksums: List<String>,
+    currentPos: Int,
+    selected: SnapshotStateMap<Int, Boolean>
+) {
     if (isConfirmDialogVisible.value) {
         AlertDialog(onDismissRequest = {
             isConfirmDialogVisible.value = false
         },
-                properties = DesktopDialogProperties(undecorated = true),
-                modifier = Modifier.border(width = 1.dp,
-                        MaterialTheme.colors.primary),
-                title = {
-                    Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
-                },
-                text = {
-                    ScrollableColumn {
-                        val sb = StringBuilder()
-                        selectedFiles.forEach {
-                            sb.append(checksums[currentPos], it.name).appendLine()
-                        }
-                        Text(sb.toString())
+            properties = DialogProperties(undecorated = true),
+            modifier = Modifier.border(
+                width = 1.dp,
+                MaterialTheme.colors.primary
+            ),
+            title = {
+                Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
+            },
+            text = {
+                LazyColumn {
+                    items(selectedFiles) {
+                        ListItem(text = { Text(it.canonicalPath) },
+                            secondaryText = { Text(it.name) })
                     }
-                },
-                dismissButton = {
-                    Button(onClick = {
-                        isConfirmDialogVisible.value = false
-                    }) {
-                        Text(RESOURCE_BUNDLE.getString("cancel"))
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    isConfirmDialogVisible.value = false
+                }) {
+                    Text(RESOURCE_BUNDLE.getString("cancel"))
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    isConfirmDialogVisible.value = false
+                    selectedFiles.forEach {
+                        df.deleteFile(checksums[currentPos], it)
                     }
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        isConfirmDialogVisible.value = false
-                        selectedFiles.forEach {
-                            df.deleteFile(checksums[currentPos], it)
-                        }
-                        selected.clear()
-                    }) {
-                        Text(RESOURCE_BUNDLE.getString("delete"))
-                    }
-                })
+                    selected.clear()
+                }) {
+                    Text(RESOURCE_BUNDLE.getString("delete"))
+                }
+            })
 
         val window = AppManager.windows.last().window
         val component = window.contentPane.getComponent(0)
@@ -346,8 +373,10 @@ fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
             override fun mouseDragged(e: MouseEvent) {
                 val dx = e.x - initialClick.x
                 val dy = e.y - initialClick.y
-                window.setLocation(window.location.x + dx,
-                        window.location.y + dy)
+                window.setLocation(
+                    window.location.x + dx,
+                    window.location.y + dy
+                )
             }
         }
         component.addMouseMotionListener(adapter)
@@ -357,9 +386,11 @@ fun ConfirmDeleteDialog(isConfirmDialogVisible: MutableState<Boolean>,
 
 private var worker: Thread? = null
 private var scanInProgress = false
-private fun startScan(baseDir: String, currentPos: MutableState<Int>,
-                      checksums: MutableState<List<String>>,
-                      scanning: MutableState<Boolean>) {
+private fun startScan(
+    baseDir: String, currentPos: MutableState<Int>,
+    checksums: MutableState<List<String>>,
+    scanning: MutableState<Boolean>
+) {
     worker = thread {
         df.clear()
         scanInProgress = true
@@ -371,9 +402,11 @@ private fun startScan(baseDir: String, currentPos: MutableState<Int>,
     }
 }
 
-private fun stopScan(currentPos: MutableState<Int>,
-                     checksums: MutableState<List<String>>,
-                     scanning: MutableState<Boolean>) {
+private fun stopScan(
+    currentPos: MutableState<Int>,
+    checksums: MutableState<List<String>>,
+    scanning: MutableState<Boolean>
+) {
     if (worker?.isAlive == true) {
         worker?.stop()
     }
@@ -386,19 +419,24 @@ private fun stopScan(currentPos: MutableState<Int>,
 private fun configureMenuBar() {
     val menuBar = MenuBar()
     if (!IS_MACOS) {
-        menuBar.add(Menu(RESOURCE_BUNDLE.getString("file"), MenuItem(
-                name = RESOURCE_BUNDLE.getString("quit"),
-                onClick = {
-                    AppManager.exit()
-                },
-                shortcut = KeyStroke.getKeyStroke(
-                        KeyEvent.VK_F4, ActionEvent.ALT_MASK)
-        )))
+        menuBar.add(
+            Menu(
+                RESOURCE_BUNDLE.getString("file"), MenuItem(
+                    name = RESOURCE_BUNDLE.getString("quit"),
+                    onClick = {
+                        AppManager.exit()
+                    },
+                    shortcut = KeyStroke.getKeyStroke(
+                        KeyEvent.VK_F4, ActionEvent.ALT_MASK
+                    )
+                )
+            )
+        )
         menuBar.add(Menu(RESOURCE_BUNDLE.getString("help"), MenuItem(
-                name = RESOURCE_BUNDLE.getString("about"),
-                onClick = {
-                    showAboutDialog.value = true
-                }
+            name = RESOURCE_BUNDLE.getString("about"),
+            onClick = {
+                showAboutDialog.value = true
+            }
         )))
     }
     AppManager.setMenu(menuBar)

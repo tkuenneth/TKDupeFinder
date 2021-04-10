@@ -34,12 +34,17 @@ private val versionInfo = object {
 fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
     if (showAboutDialog.value) {
         Dialog(onDismissRequest = { showAboutDialog.value = false }) {
-            Column(modifier = Modifier.fillMaxSize().padding(8.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Text(RESOURCE_BUNDLE.getString("tkdupefinder"))
-                Image(bitmap = imageResource("app_icon.png"),
-                        modifier = Modifier.preferredSize(96.dp))
+                Image(
+                    bitmap = imageResource("app_icon.png"),
+                    "",
+                    modifier = Modifier.requiredSize(96.dp)
+                )
                 Text(versionInfo.implementationVersion)
             }
         }

@@ -2,8 +2,8 @@ import org.jetbrains.compose.compose
 import org.jetbrains.compose.desktop.application.dsl.*
 
 plugins {
-    kotlin("jvm") version "1.4.21"
-    id("org.jetbrains.compose") version "0.3.0-build140"
+    kotlin("jvm") version "1.4.32"
+    id("org.jetbrains.compose") version "0.4.0-build180"
 }
 
 repositories {
@@ -25,9 +25,9 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg,
                     TargetFormat.Msi)
             packageName = "TKDupeFinder"
-            version = "0.1-SNAPSHOT"
+            packageVersion = "1.0.0"
             description = "Find duplicate files"
-            copyright = "© 2020 Thomas Kuenneth. All rights reserved."
+            copyright = "© 2011 - 2021 Thomas Kuenneth. All rights reserved."
             vendor = "Thomas Kuenneth"
             macOS {
                 iconFile.set(project.file("app_icon.icns"))
