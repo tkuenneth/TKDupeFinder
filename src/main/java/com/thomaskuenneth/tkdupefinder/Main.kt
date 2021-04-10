@@ -20,6 +20,8 @@ import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,6 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -59,6 +63,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.io.File
 import java.util.*
+import javax.swing.JOptionPane
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities.invokeLater
 import javax.swing.event.MouseInputAdapter
@@ -183,18 +188,23 @@ fun FirstRow(
             .padding(8.dp)
     ) {
         TextField(
-            name.value, { name.value = it },
+            value = name.value,
+            onValueChange = { name.value = it },
+            modifier = Modifier.alignBy(LastBaseline)
+                .weight(1.0f),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(autoCorrect = false, imeAction = ImeAction.Search),
             placeholder = {
                 Text(RESOURCE_BUNDLE.getString("base.directory"))
             },
-            modifier = Modifier.alignBy(LastBaseline)
-                .weight(1.0f),
-            keyboardActions = KeyboardActions(onDone = {
+            keyboardOptions = KeyboardOptions(
+                autoCorrect = false,
+                keyboardType = KeyboardType.Uri,
+                capitalization = KeyboardCapitalization.None,
+                imeAction = ImeAction.Search
+            ),
+            keyboardActions = KeyboardActions(onAny = {
                 function()
-            }),
-//            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go)
+            })
         )
         MySpacer()
         Button(
@@ -313,7 +323,7 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     ConfirmDeleteDialog(isConfirmDialogVisible, selectedFiles, checksums, currentPos, selected)
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@ExperimentalMaterialApi
 @Composable
 fun ConfirmDeleteDialog(
     isConfirmDialogVisible: MutableState<Boolean>,
@@ -323,64 +333,56 @@ fun ConfirmDeleteDialog(
     selected: SnapshotStateMap<Int, Boolean>
 ) {
     if (isConfirmDialogVisible.value) {
-        AlertDialog(onDismissRequest = {
-            isConfirmDialogVisible.value = false
-        },
-            properties = DialogProperties(undecorated = true),
-            modifier = Modifier.border(
-                width = 1.dp,
-                MaterialTheme.colors.primary
-            ),
-            title = {
-                Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
-            },
-            text = {
-                LazyColumn {
-                    items(selectedFiles) {
-                        ListItem(text = { Text(it.canonicalPath) },
-                            secondaryText = { Text(it.name) })
-                    }
-                }
-            },
-            dismissButton = {
-                Button(onClick = {
-                    isConfirmDialogVisible.value = false
-                }) {
-                    Text(RESOURCE_BUNDLE.getString("cancel"))
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    isConfirmDialogVisible.value = false
-                    selectedFiles.forEach {
-                        df.deleteFile(checksums[currentPos], it)
-                    }
-                    selected.clear()
-                }) {
-                    Text(RESOURCE_BUNDLE.getString("delete"))
-                }
-            })
-
-        val window = AppManager.windows.last().window
-        val component = window.contentPane.getComponent(0)
-        val adapter = object : MouseInputAdapter() {
-            private lateinit var initialClick: Point
-
-            override fun mousePressed(e: MouseEvent) {
-                initialClick = e.point
+        if (JOptionPane.showConfirmDialog(
+                null,
+                "Delete ${selectedFiles.size} files?",
+                RESOURCE_BUNDLE.getString("confirm_deletion"),
+                JOptionPane.YES_NO_OPTION
+            ) == JOptionPane.YES_OPTION
+        ) {
+            selectedFiles.forEach {
+                df.deleteFile(checksums[currentPos], it)
             }
-
-            override fun mouseDragged(e: MouseEvent) {
-                val dx = e.x - initialClick.x
-                val dy = e.y - initialClick.y
-                window.setLocation(
-                    window.location.x + dx,
-                    window.location.y + dy
-                )
-            }
+            selected.clear()
         }
-        component.addMouseMotionListener(adapter)
-        component.addMouseListener(adapter)
+        isConfirmDialogVisible.value = false
+//        AlertDialog(onDismissRequest = {
+//            isConfirmDialogVisible.value = false
+//        },
+//            properties = DialogProperties(undecorated = true),
+//            modifier = Modifier.border(
+//                width = 1.dp,
+//                MaterialTheme.colors.primary
+//            ),
+//            title = {
+//                Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
+//            },
+//            text = {
+//                LazyColumn {
+//                    items(selectedFiles) {
+//                        ListItem(text = { Text(it.canonicalPath) },
+//                            secondaryText = { Text(it.name) })
+//                    }
+//                }
+//            },
+//            dismissButton = {
+//                Button(onClick = {
+//                    isConfirmDialogVisible.value = false
+//                }) {
+//                    Text(RESOURCE_BUNDLE.getString("cancel"))
+//                }
+//            },
+//            confirmButton = {
+//                Button(onClick = {
+//                    isConfirmDialogVisible.value = false
+//                    selectedFiles.forEach {
+//                        df.deleteFile(checksums[currentPos], it)
+//                    }
+//                    selected.clear()
+//                }) {
+//                    Text(RESOURCE_BUNDLE.getString("delete"))
+//                }
+//            })
     }
 }
 
