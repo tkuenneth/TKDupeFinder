@@ -21,29 +21,34 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.v1.Dialog
+import androidx.compose.ui.window.v1.DialogProperties
 
 private val versionInfo = object {
     val implementationVersion = javaClass.getPackage().implementationVersion ?: "???"
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
     if (showAboutDialog.value) {
-        Dialog(onDismissRequest = { showAboutDialog.value = false }) {
+        Dialog(onDismissRequest = { showAboutDialog.value = false },
+                properties = DialogProperties(title = RESOURCE_BUNDLE.getString("about"),
+                        icon = appIcon())) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.fillMaxSize().padding(8.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(RESOURCE_BUNDLE.getString("tkdupefinder"))
                 Image(
-                    bitmap = imageResource("app_icon.png"),
-                    "",
-                    modifier = Modifier.requiredSize(96.dp)
+                        bitmap = imageResource("app_icon.png"),
+                        "",
+                        modifier = Modifier.requiredSize(96.dp)
                 )
                 Text(versionInfo.implementationVersion)
             }

@@ -16,15 +16,11 @@
 package com.thomaskuenneth.tkdupefinder
 
 import androidx.compose.desktop.AppManager
-import androidx.compose.desktop.AppWindow
 import androidx.compose.desktop.DesktopMaterialTheme
+import androidx.compose.desktop.Window
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
@@ -33,6 +29,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LastBaseline
@@ -40,11 +37,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.window.Menu
-import androidx.compose.ui.window.MenuBar
-import androidx.compose.ui.window.MenuItem
+import androidx.compose.ui.window.application
+import androidx.compose.ui.window.v1.DialogProperties
+import androidx.compose.ui.window.v1.Menu
+import androidx.compose.ui.window.v1.MenuBar
+import androidx.compose.ui.window.v1.MenuItem
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
 import com.thomaskuenneth.isSystemInDarkTheme
 import kotlinx.coroutines.GlobalScope
@@ -52,21 +51,16 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.awt.Desktop
-import java.awt.Point
-import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
 import java.io.File
 import java.util.*
-import javax.swing.JOptionPane
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities.invokeLater
-import javax.swing.event.MouseInputAdapter
 import kotlin.concurrent.thread
 import kotlin.properties.Delegates.observable
 
@@ -83,7 +77,8 @@ private lateinit var showAboutDialog: MutableState<Boolean>
 
 @ExperimentalMaterialApi
 @ExperimentalComposeApi
-fun main() {
+@OptIn(ExperimentalComposeUiApi::class)
+fun main() = application {
     GlobalScope.launch {
         while (isActive) {
             val newMode = isSystemInDarkTheme()
@@ -93,15 +88,34 @@ fun main() {
             delay(1000)
         }
     }
-    invokeLater {
-        // JFrame.setDefaultLookAndFeelDecorated(true)
-        configureMenuBar()
-        AppWindow(
-            // undecorated = true,
-            title = RESOURCE_BUNDLE.getString("tkdupefinder"),
-        ).show {
-            TKDupeFinderContent()
-        }
+    Window(title = RESOURCE_BUNDLE.getString("tkdupefinder"),
+            icon = appIcon(),
+            menuBar = createMenuBar()) {
+        TKDupeFinderContent()
+    }
+}
+
+private fun createMenuBar() = MenuBar().apply {
+    if (!IS_MACOS) {
+        add(
+                Menu(
+                        RESOURCE_BUNDLE.getString("file"), MenuItem(
+                        name = RESOURCE_BUNDLE.getString("quit"),
+                        onClick = {
+                            AppManager.exit()
+                        },
+                        shortcut = KeyStroke.getKeyStroke(
+                                KeyEvent.VK_F4, ActionEvent.ALT_MASK
+                        )
+                )
+                )
+        )
+        add(Menu(RESOURCE_BUNDLE.getString("help"), MenuItem(
+                name = RESOURCE_BUNDLE.getString("about"),
+                onClick = {
+                    showAboutDialog.value = true
+                }
+        )))
     }
 }
 
@@ -118,19 +132,20 @@ fun TKDupeFinderContent() {
     val checksums = remember { mutableStateOf<List<String>>(emptyList()) }
     val selected = remember { mutableStateMapOf<Int, Boolean>() }
     val scanning = remember { mutableStateOf(false) }
+    val alreadyScanned = remember { mutableStateOf(false) }
     DesktopMaterialTheme(colors = colors) {
         Surface {
             Column() {
-                FirstRow(name, currentPos, checksums, selected, scanning)
+                FirstRow(name, currentPos, checksums, selected, scanning, alreadyScanned)
                 if (scanning.value) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator()
                     }
                 } else {
-                    SecondRow(currentPos, checksums.value.size, selected)
+                    SecondRow(currentPos, checksums.value.size, selected, alreadyScanned.value)
                     ThirdRow(currentPos.value, checksums.value, selected)
                 }
             }
@@ -142,9 +157,9 @@ fun TKDupeFinderContent() {
             try {
                 evt.acceptDrop(DnDConstants.ACTION_REFERENCE)
                 val droppedFiles = evt
-                    .transferable.getTransferData(
-                        DataFlavor.javaFileListFlavor
-                    ) as List<*>
+                        .transferable.getTransferData(
+                                DataFlavor.javaFileListFlavor
+                        ) as List<*>
                 droppedFiles.first()?.let {
                     name.value = TextFieldValue((it as File).absolutePath)
                 }
@@ -155,20 +170,17 @@ fun TKDupeFinderContent() {
     }
     val window = AppManager.windows.first().window
     window.contentPane.dropTarget = target
-    window.iconImage = Toolkit.getDefaultToolkit().getImage("app_icon.png")
     AboutDialog(showAboutDialog)
-//    window.rootPane.windowDecorationStyle = JRootPane.FRAME
-//    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
-//    SwingUtilities.updateComponentTreeUI(window.rootPane)
 }
 
 @Composable
 fun FirstRow(
-    name: MutableState<TextFieldValue>,
-    currentPos: MutableState<Int>,
-    checksums: MutableState<List<String>>,
-    selected: SnapshotStateMap<Int, Boolean>,
-    scanning: MutableState<Boolean>
+        name: MutableState<TextFieldValue>,
+        currentPos: MutableState<Int>,
+        checksums: MutableState<List<String>>,
+        selected: SnapshotStateMap<Int, Boolean>,
+        scanning: MutableState<Boolean>,
+        alreadyScanned: MutableState<Boolean>
 ) {
     val enabled = scanning.value || File(name.value.text).isDirectory
     val function = {
@@ -176,6 +188,7 @@ fun FirstRow(
             if (scanning.value) {
                 stopScan(currentPos, checksums, scanning)
             } else {
+                alreadyScanned.value = true
                 scanning.value = true
                 selected.clear()
                 checksums.value = emptyList()
@@ -184,33 +197,33 @@ fun FirstRow(
         }
     }
     Row(
-        modifier = Modifier.fillMaxWidth()
-            .padding(8.dp)
+            modifier = Modifier.fillMaxWidth()
+                    .padding(8.dp)
     ) {
         TextField(
-            value = name.value,
-            onValueChange = { name.value = it },
-            modifier = Modifier.alignBy(LastBaseline)
-                .weight(1.0f),
-            singleLine = true,
-            placeholder = {
-                Text(RESOURCE_BUNDLE.getString("base.directory"))
-            },
-            keyboardOptions = KeyboardOptions(
-                autoCorrect = false,
-                keyboardType = KeyboardType.Uri,
-                capitalization = KeyboardCapitalization.None,
-                imeAction = ImeAction.Search
-            ),
-            keyboardActions = KeyboardActions(onAny = {
-                function()
-            })
+                value = name.value,
+                onValueChange = { name.value = it },
+                modifier = Modifier.alignBy(LastBaseline)
+                        .weight(1.0f),
+                singleLine = true,
+                placeholder = {
+                    Text(RESOURCE_BUNDLE.getString("base_directory"))
+                },
+                keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Uri,
+                        capitalization = KeyboardCapitalization.None,
+                        imeAction = ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(onAny = {
+                    function()
+                })
         )
         MySpacer()
         Button(
-            onClick = function,
-            modifier = Modifier.alignByBaseline().width(100.dp),
-            enabled = enabled
+                onClick = function,
+                modifier = Modifier.alignByBaseline().width(100.dp),
+                enabled = enabled
         ) {
             Text(RESOURCE_BUNDLE.getString(if (scanning.value) "cancel" else "find"))
         }
@@ -219,38 +232,39 @@ fun FirstRow(
 
 @Composable
 fun SecondRow(
-    currentPos: MutableState<Int>, checksumsSize: Int,
-    selected: SnapshotStateMap<Int, Boolean>
+        currentPos: MutableState<Int>, checksumsSize: Int,
+        selected: SnapshotStateMap<Int, Boolean>,
+        alreadyScanned: Boolean
 ) {
     val current = currentPos.value
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-            .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+                    .padding(8.dp),
     ) {
         Button(
-            onClick = {
-                selected.clear()
-                currentPos.value -= 1
-            },
-            enabled = current > 0
+                onClick = {
+                    selected.clear()
+                    currentPos.value -= 1
+                },
+                enabled = current > 0
         ) {
             Text("\u140A")
         }
         MySpacer()
         Button(
-            onClick = {
-                selected.clear()
-                currentPos.value += 1
-            },
-            enabled = (current + 1) < checksumsSize
+                onClick = {
+                    selected.clear()
+                    currentPos.value += 1
+                },
+                enabled = (current + 1) < checksumsSize
         ) {
             Text("\u1405")
         }
         MySpacer()
         var msg = if (checksumsSize > 0) {
             "${currentPos.value + 1} of $checksumsSize"
-        } else RESOURCE_BUNDLE.getString("no.duplicates.found")
+        } else RESOURCE_BUNDLE.getString(if (alreadyScanned) "no_duplicates_found" else "click_find")
         if (scanInProgress) {
             msg = "$msg (${RESOURCE_BUNDLE.getString("cancelled")})"
         }
@@ -276,47 +290,47 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
     val isConfirmDialogVisible = remember { mutableStateOf(false) }
     Row(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         LazyColumn(
-            modifier = Modifier.weight(1.0f)
+                modifier = Modifier.weight(1.0f)
         )
         {
             itemsIndexed(items) { index, item ->
                 val current = selected[index] ?: false
                 ListItem(secondaryText = { Text(item.parent) },
-                    modifier = Modifier.toggleable(
-                        onValueChange = {
-                            selected[index] = !current
-                        },
-                        value = current
-                    )
-                        .background(
-                            if (current)
-                                Color.LightGray else Color.Transparent
-                        ),
-                    text = { Text(item.name) })
+                        modifier = Modifier.toggleable(
+                                onValueChange = {
+                                    selected[index] = !current
+                                },
+                                value = current
+                        )
+                                .background(
+                                        if (current)
+                                            Color.LightGray else Color.Transparent
+                                ),
+                        text = { Text(item.name) })
             }
         }
         MySpacer()
         Column() {
             Button(
-                onClick = {
-                    selectedFiles.forEach {
-                        Desktop.getDesktop().open(it)
-                    }
-                },
-                modifier = Modifier.width(100.dp),
-                enabled = numSelected > 0
+                    onClick = {
+                        selectedFiles.forEach {
+                            Desktop.getDesktop().open(it)
+                        }
+                    },
+                    modifier = Modifier.width(100.dp),
+                    enabled = numSelected > 0
             ) {
-                Text("Show")
+                Text(RESOURCE_BUNDLE.getString("show"))
             }
             Spacer(modifier = Modifier.height(8.dp))
             Button(
-                onClick = {
-                    isConfirmDialogVisible.value = true
-                },
-                modifier = Modifier.width(100.dp),
-                enabled = numSelected > 0 && numSelected < items.size
+                    onClick = {
+                        isConfirmDialogVisible.value = true
+                    },
+                    modifier = Modifier.width(100.dp),
+                    enabled = numSelected > 0 && numSelected < items.size
             ) {
-                Text("Delete")
+                Text(RESOURCE_BUNDLE.getString("delete"))
             }
         }
     }
@@ -326,72 +340,55 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
 @ExperimentalMaterialApi
 @Composable
 fun ConfirmDeleteDialog(
-    isConfirmDialogVisible: MutableState<Boolean>,
-    selectedFiles: MutableList<File>,
-    checksums: List<String>,
-    currentPos: Int,
-    selected: SnapshotStateMap<Int, Boolean>
+        isConfirmDialogVisible: MutableState<Boolean>,
+        selectedFiles: MutableList<File>,
+        checksums: List<String>,
+        currentPos: Int,
+        selected: SnapshotStateMap<Int, Boolean>
 ) {
     if (isConfirmDialogVisible.value) {
-        if (JOptionPane.showConfirmDialog(
-                null,
-                "Delete ${selectedFiles.size} files?",
-                RESOURCE_BUNDLE.getString("confirm_deletion"),
-                JOptionPane.YES_NO_OPTION
-            ) == JOptionPane.YES_OPTION
-        ) {
-            selectedFiles.forEach {
-                df.deleteFile(checksums[currentPos], it)
-            }
-            selected.clear()
-        }
-        isConfirmDialogVisible.value = false
-//        AlertDialog(onDismissRequest = {
-//            isConfirmDialogVisible.value = false
-//        },
-//            properties = DialogProperties(undecorated = true),
-//            modifier = Modifier.border(
-//                width = 1.dp,
-//                MaterialTheme.colors.primary
-//            ),
-//            title = {
-//                Text(RESOURCE_BUNDLE.getString("confirm_deletion"))
-//            },
-//            text = {
-//                LazyColumn {
-//                    items(selectedFiles) {
-//                        ListItem(text = { Text(it.canonicalPath) },
-//                            secondaryText = { Text(it.name) })
-//                    }
-//                }
-//            },
-//            dismissButton = {
-//                Button(onClick = {
-//                    isConfirmDialogVisible.value = false
-//                }) {
-//                    Text(RESOURCE_BUNDLE.getString("cancel"))
-//                }
-//            },
-//            confirmButton = {
-//                Button(onClick = {
-//                    isConfirmDialogVisible.value = false
-//                    selectedFiles.forEach {
-//                        df.deleteFile(checksums[currentPos], it)
-//                    }
-//                    selected.clear()
-//                }) {
-//                    Text(RESOURCE_BUNDLE.getString("delete"))
-//                }
-//            })
+        AlertDialog(onDismissRequest = {
+            isConfirmDialogVisible.value = false
+        },
+                properties = DialogProperties(
+                        title = RESOURCE_BUNDLE.getString("confirm_deletion"),
+                        icon = appIcon(),
+                        size = IntSize(400, 150),
+                        resizable = false
+                ),
+                text = {
+                    Column(modifier = Modifier.fillMaxHeight()) {
+                        Text(String.format(RESOURCE_BUNDLE.getString("confirm_delete"),
+                                selectedFiles.size))
+                    }
+                },
+                dismissButton = {
+                    Button(onClick = {
+                        isConfirmDialogVisible.value = false
+                    }) {
+                        Text(RESOURCE_BUNDLE.getString("cancel"))
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        isConfirmDialogVisible.value = false
+                        selectedFiles.forEach {
+                            df.deleteFile(checksums[currentPos], it)
+                        }
+                        selected.clear()
+                    }) {
+                        Text(RESOURCE_BUNDLE.getString("delete"))
+                    }
+                })
     }
 }
 
 private var worker: Thread? = null
 private var scanInProgress = false
 private fun startScan(
-    baseDir: String, currentPos: MutableState<Int>,
-    checksums: MutableState<List<String>>,
-    scanning: MutableState<Boolean>
+        baseDir: String, currentPos: MutableState<Int>,
+        checksums: MutableState<List<String>>,
+        scanning: MutableState<Boolean>
 ) {
     worker = thread {
         df.clear()
@@ -405,9 +402,9 @@ private fun startScan(
 }
 
 private fun stopScan(
-    currentPos: MutableState<Int>,
-    checksums: MutableState<List<String>>,
-    scanning: MutableState<Boolean>
+        currentPos: MutableState<Int>,
+        checksums: MutableState<List<String>>,
+        scanning: MutableState<Boolean>
 ) {
     if (worker?.isAlive == true) {
         worker?.stop()
@@ -416,32 +413,6 @@ private fun stopScan(
     currentPos.value = 0
     checksums.value = df.checksums.toList()
     scanning.value = false
-}
-
-private fun configureMenuBar() {
-    val menuBar = MenuBar()
-    if (!IS_MACOS) {
-        menuBar.add(
-            Menu(
-                RESOURCE_BUNDLE.getString("file"), MenuItem(
-                    name = RESOURCE_BUNDLE.getString("quit"),
-                    onClick = {
-                        AppManager.exit()
-                    },
-                    shortcut = KeyStroke.getKeyStroke(
-                        KeyEvent.VK_F4, ActionEvent.ALT_MASK
-                    )
-                )
-            )
-        )
-        menuBar.add(Menu(RESOURCE_BUNDLE.getString("help"), MenuItem(
-            name = RESOURCE_BUNDLE.getString("about"),
-            onClick = {
-                showAboutDialog.value = true
-            }
-        )))
-    }
-    AppManager.setMenu(menuBar)
 }
 
 private fun colors(): Colors = if (isInDarkMode) {
