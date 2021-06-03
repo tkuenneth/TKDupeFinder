@@ -19,6 +19,7 @@ import androidx.compose.desktop.AppManager
 import androidx.compose.desktop.DesktopMaterialTheme
 import androidx.compose.desktop.Window
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.forEachGesture
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -32,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -57,6 +59,7 @@ import java.awt.dnd.DropTarget
 import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.io.File
 import java.util.*
 import javax.swing.KeyStroke
@@ -300,8 +303,19 @@ fun ThirdRow(currentPos: Int, checksums: List<String>, selected: SnapshotStateMa
                                 onValueChange = {
                                     selected[index] = !current
                                 },
-                                value = current
-                        )
+                                value = current)
+                                .pointerInput(Unit) {
+                                    forEachGesture {
+                                        awaitPointerEventScope {
+                                            awaitPointerEvent().mouseEvent?.run {
+                                                if ((clickCount == 2) and (button == MouseEvent.BUTTON1)) {
+                                                    selected.clear()
+                                                    Desktop.getDesktop().open(items[index])
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 .background(
                                         if (current)
                                             Color.LightGray else Color.Transparent
