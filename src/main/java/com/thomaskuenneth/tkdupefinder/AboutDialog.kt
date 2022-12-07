@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Thomas Kuenneth
+ * Copyright 2020 - 2022 Thomas Kuenneth
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3
@@ -21,34 +21,33 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.v1.Dialog
-import androidx.compose.ui.window.v1.DialogProperties
+import androidx.compose.ui.window.Dialog
 
 private val versionInfo = object {
     val implementationVersion = javaClass.getPackage().implementationVersion ?: "???"
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
     if (showAboutDialog.value) {
-        Dialog(onDismissRequest = { showAboutDialog.value = false },
-                properties = DialogProperties(title = RESOURCE_BUNDLE.getString("about"),
-                        icon = appIcon())) {
+        Dialog(
+            onCloseRequest = { showAboutDialog.value = false },
+            icon = getAppIcon(),
+            resizable = false,
+            title = RESOURCE_BUNDLE.getString("about")
+        ) {
             Column(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(RESOURCE_BUNDLE.getString("tkdupefinder"))
                 Image(
-                        bitmap = imageResource("app_icon.png"),
-                        "",
-                        modifier = Modifier.requiredSize(96.dp)
+                    painter = getAppIcon(),
+                    null,
+                    modifier = Modifier.requiredSize(96.dp)
                 )
                 Text(versionInfo.implementationVersion)
             }
