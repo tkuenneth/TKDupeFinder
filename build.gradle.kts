@@ -29,11 +29,13 @@ compose.desktop {
             copyright = "© 2011 - 2022 Thomas Kuenneth. All rights reserved."
             vendor = "Thomas Kuenneth"
             macOS {
-                iconFile.set(project.file("app_icon.icns"))
+                iconFile.set(project.file("artwork/app_icon.icns"))
             }
             windows {
-                iconFile.set(project.file("artwork/app:icon.ico"))
+                iconFile.set(project.file("artwork/app_icon.ico"))
+                menuGroup = "Thomas Kuenneth"
             }
+            modules("java.instrument", "jdk.unsupported")
         }
     }
 }

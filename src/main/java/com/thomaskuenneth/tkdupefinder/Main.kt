@@ -131,8 +131,7 @@ fun FrameWindowScope.TKDupeFinderContent(quitCallback: () -> Unit) {
                         text = RESOURCE_BUNDLE.getString("about"),
                         onClick = {
                             showAboutDialog.value = true
-                        },
-                        shortcut = KeyShortcut(Key.F4, alt = true)
+                        }
                     )
                 }
             }
