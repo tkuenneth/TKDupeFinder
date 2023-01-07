@@ -46,7 +46,16 @@ compose.desktop {
             copyright = "© 2011 - 2023 Thomas Kuenneth. All rights reserved."
             vendor = "Thomas Kuenneth"
             macOS {
+                bundleID = "eu.thomaskuenneth.tkdupefinder"
                 iconFile.set(project.file("artwork/app_icon.icns"))
+                signing {
+                    sign.set(true)
+                    identity.set("Thomas Kuenneth")
+                }
+                notarization {
+                    appleID.set("thomas.kuenneth@icloud.com")
+                    password.set("@keychain:NOTARIZATION_PASSWORD")
+                }
             }
             windows {
                 iconFile.set(project.file("artwork/app_icon.ico"))
