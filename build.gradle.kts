@@ -7,11 +7,17 @@ plugins {
     id("org.jetbrains.compose") version "1.2.1"
 }
 
+var buildNumber = 1
 val properties = Properties()
 val file = rootProject.file("src/main/resources/version.properties")
 if (file.isFile) {
     InputStreamReader(FileInputStream(file), Charsets.UTF_8).use { reader ->
         properties.load(reader)
+        buildNumber = 1 + properties.getProperty("BUILD_NUMBER", "0").toInt()
+        properties.setProperty("BUILD_NUMBER", "$buildNumber")
+        FileOutputStream(file).use { outputStream ->
+            properties.store(outputStream, null)
+        }
     }
 } else error("${file.absolutePath} not found")
 version = properties.getProperty("VERSION")

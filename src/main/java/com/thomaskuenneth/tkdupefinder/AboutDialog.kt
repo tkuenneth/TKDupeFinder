@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import java.util.ResourceBundle.getBundle
+import com.thomaskuenneth.getStringFromProperties
 
 @Composable
 fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
@@ -46,7 +46,7 @@ fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
                     null,
                     modifier = Modifier.requiredSize(96.dp)
                 )
-                Text(getBundle("version").getString("VERSION"))
+                Text("${getStringFromProperties("version", "VERSION", "???")} (${getStringFromProperties("version", "BUILD_NUMBER", "???")})")
             }
         }
     }

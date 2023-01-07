@@ -137,7 +137,7 @@ fun FrameWindowScope.TKDupeFinderContent(quitCallback: () -> Unit) {
             }
         }
         Surface {
-            Column() {
+            Column {
                 FirstRow(name, currentPos, checksums, selected, scanning, alreadyScanned)
                 if (scanning.value) {
                     Box(

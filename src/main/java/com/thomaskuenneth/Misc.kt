@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Thomas Kuenneth
+ * Copyright 2020 - 2022 Thomas Kuenneth
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3
@@ -21,21 +21,34 @@ import com.github.tkuenneth.nativeparameterstoreaccess.MacOSDefaults
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_MACOS
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess.IS_WINDOWS
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry
+import java.util.*
 
 fun isSystemInDarkTheme(): Boolean = when {
     IS_WINDOWS -> {
         val result = WindowsRegistry.getWindowsRegistryEntry(
-                "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                "AppsUseLightTheme")
+            "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "AppsUseLightTheme"
+        )
         result == 0x0
     }
+
     IS_MACOS -> {
         val result = MacOSDefaults.getDefaultsEntry("AppleInterfaceStyle")
         result == "Dark"
     }
+
     HAS_DCONF -> {
         val result = Dconf.getDconfEntry("/org/gnome/desktop/interface/gtk-theme")
-        result.toLowerCase().contains("dark")
+        result.lowercase(Locale.getDefault()).contains("dark")
     }
+
     else -> false
+}
+
+fun getStringFromProperties(properties: String, key: String, defaultValue: String): String {
+    return try {
+        ResourceBundle.getBundle(properties).getString(key)
+    } catch (ex: Exception) {
+        return defaultValue
+    }
 }
