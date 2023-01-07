@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 - 2022 Thomas Kuenneth
+ * Copyright 2020 - 2023 Thomas Kuenneth
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3
@@ -24,10 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-
-private val versionInfo = object {
-    val implementationVersion = javaClass.getPackage().implementationVersion ?: "???"
-}
+import java.util.ResourceBundle.getBundle
 
 @Composable
 fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
@@ -49,7 +46,7 @@ fun AboutDialog(showAboutDialog: MutableState<Boolean>) {
                     null,
                     modifier = Modifier.requiredSize(96.dp)
                 )
-                Text(versionInfo.implementationVersion)
+                Text(getBundle("version").getString("VERSION"))
             }
         }
     }
